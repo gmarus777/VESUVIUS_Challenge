@@ -37,6 +37,7 @@ class Scrolls_Dataset(pl.LightningDataModule):
 
 
                  ):
+        super().__init__()
 
         self.buffer = buffer
         self.z_start = z_start
