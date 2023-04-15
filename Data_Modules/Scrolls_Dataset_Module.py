@@ -88,9 +88,9 @@ class Scrolls_Dataset(pl.LightningDataModule):
             # obtain train_pixesl and val_pixels
             train_pixels , val_pixels = self.split_train_val(mask_tensors)
             self.mask =  torch.from_numpy(mask_tensors)
-            self.image_tensors = images_tensors
-            self.pixels = train_pixels
-            self.label_tensors = label_tensors
+            #self.image_tensors = images_tensors
+            #self.pixels = train_pixels
+            #self.label_tensors = label_tensors
             del mask_tensors
 
             if self.monai:

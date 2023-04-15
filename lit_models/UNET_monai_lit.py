@@ -30,7 +30,7 @@ class UNET_lit(pl.LightningModule):
 
         z_dim: int,
         weight_decay: float = 0.0005,
-        learning_rate: float = 0.0004,
+        learning_rate: float = 0.001,
         gamma: float = 0.85,
         milestones: List[int] = [2, 4, 5, 6, 7, 9, 10, 12, 15, 17, 20, 25],
     ):
