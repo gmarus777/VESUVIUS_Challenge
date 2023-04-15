@@ -8,6 +8,7 @@ import PIL.Image as Image
 import numpy as np
 from tqdm import tqdm
 from Data_Modules.Base_Dataset import Base_Dataset
+from Data_Modules.Monai_Base_Dataset import Monai_Base_Dataset
 
 
 PATH = 'kaggle/input/vesuvius-challenge/'
@@ -22,6 +23,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Scrolls_Dataset(pl.LightningDataModule):
 
     def __init__(self,
+                 monai =False,
                  buffer = 30,
                  z_start = 27,
                  z_dim = 10,
@@ -39,6 +41,7 @@ class Scrolls_Dataset(pl.LightningDataModule):
                  ):
         super().__init__()
 
+        self.monai = monai
         self.buffer = buffer
         self.z_start = z_start
         self.z_dim = z_dim
@@ -84,11 +87,23 @@ class Scrolls_Dataset(pl.LightningDataModule):
 
             # obtain train_pixesl and val_pixels
             train_pixels , val_pixels = self.split_train_val(mask_tensors)
-            self.mask = mask_tensors
-            #del mask_tensors
+            self.mask =  torch.from_numpy(mask_tensors)
+            self.image_tensors = images_tensors
+            self.pixels = train_pixels
+            self.label_tensors = label_tensors
+            del mask_tensors
 
-            self.data_train = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=train_pixels, buffer=self.buffer, z_dim=self.z_dim )
-            self.data_val = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=val_pixels,  buffer=self.buffer, z_dim=self.z_dim)
+            if self.monai:
+                self.data_train = Monai_Base_Dataset(image_stack=images_tensors, label=label_tensors, pixels=train_pixels,
+                                               buffer=self.buffer, z_dim=self.z_dim, mask = self.mask)
+
+                self.data_val = Monai_Base_Dataset(image_stack=images_tensors, label=label_tensors, pixels=val_pixels,
+                                             buffer=self.buffer, z_dim=self.z_dim, mask = self.mask)
+
+
+            else:
+                self.data_train = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=train_pixels, buffer=self.buffer, z_dim=self.z_dim )
+                self.data_val = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=val_pixels,  buffer=self.buffer, z_dim=self.z_dim)
 
             del images_tensors
             del label_tensors
@@ -169,7 +184,7 @@ class Scrolls_Dataset(pl.LightningDataModule):
             img = self.resize(img)
             z_slice = np.array(img, dtype="float32")/65535.0
             images.append(z_slice)
-        return torch.stack([torch.from_numpy(image) for image in images], dim=0).to(DEVICE)
+        return torch.stack([torch.from_numpy(image) for image in images], dim=0)#.to(DEVICE)
 
 
 
@@ -183,7 +198,7 @@ class Scrolls_Dataset(pl.LightningDataModule):
     def load_labels(self, split, index):
         img = Image.open(f"{PATH}/{split}/{index}/inklabels.png")
         img = self.resize(img)
-        return torch.from_numpy(np.array(img)).gt(0).float().to(DEVICE)
+        return torch.from_numpy(np.array(img)).gt(0).float()#.to(DEVICE)
 
 
     def resize(self, img):

@@ -1,2 +1,5 @@
 data
 kaggle
+lightning_logs
+logs
+wandb

@@ -4,8 +4,11 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 
-
-
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+try:
+    import wandb
+except ModuleNotFoundError:
+    pass
 
 
 class ResNet3d_lit(pl.LightningModule):
@@ -46,9 +49,9 @@ class ResNet3d_lit(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         images, labels = batch
 
-        logits = self.model(images)
+        logits = self.model(images.to(DEVICE))
 
-        loss = self.loss_fn(logits,labels.squeeze(1).long())
+        loss = self.loss_fn(logits,labels.squeeze(1).long().to(DEVICE))
         self.log("train/loss", loss, prog_bar=True)
 
 
@@ -62,7 +65,7 @@ class ResNet3d_lit(pl.LightningModule):
         logits = self.model(images)
 
         loss = self.loss_fn(logits, labels)
-        self.log("train/loss", loss, prog_bar=True)
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 
         outputs = {"loss": loss}
 
