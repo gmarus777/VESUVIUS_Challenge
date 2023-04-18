@@ -49,7 +49,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                  z_dim=64,
                  shared_height=None,
                  downsampling=None,
-                 train__fragment_id=[1],
+                 train__fragment_id=[1,2],
                  val_fragment_id=[3],
                  stage='train',
                  batch_size=1,
@@ -149,6 +149,13 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.LoadImaged(
                     keys=("mask_npy", "label_npy"),
                     ensure_channel_first=True,
+                ),
+
+                monai.transforms.RandWeightedCropd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    spatial_size=self.hparams.patch_size,
+                    num_samples=self.hparams.num_samples,
+                    w_key="mask_npy",
                 ),
             ]
         )
