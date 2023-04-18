@@ -1,22 +1,14 @@
-from collections import defaultdict
-from io import StringIO
-from pathlib import Path
+
 from typing import Tuple, List
 
 
 import monai
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import PIL.Image as Image
+
 import pytorch_lightning as pl
-import seaborn as sns
+
 import torch
-from monai.data import CSVDataset
-from monai.data import DataLoader
-from monai.inferers import sliding_window_inference
-from monai.visualize import matshow3d
-from torchmetrics import Dice
+
+from torchmetrics import Dice, FBetaScore
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 try:
@@ -32,7 +24,7 @@ class UNET_lit(pl.LightningModule):
         weight_decay: float = 0.0005,
         learning_rate: float = 0.001,
         gamma: float = 0.85,
-        milestones: List[int] = [2, 4, 5, 6, 7, 9, 10, 12, 15, 17, 20, 25],
+        milestones: List[int] = [ 4, 5, 6, 7, 9, 10, 12, 15, 17, 20, 25],
     ):
         super().__init__()
 
@@ -83,10 +75,20 @@ class UNET_lit(pl.LightningModule):
         labels = labels.long()
         outputs = self.model(images.squeeze(1))
         loss = self.loss(outputs, labels, masks)
+        preds = torch.sigmoid(outputs.detach()).gt(.4).int()
+        accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
+        fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4)
+        fbeta = fbeta_score(torch.sigmoid(outputs), labels)
+
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
-        wandb.log({"train/loss": loss})
+        wandb.log({"val/loss", loss})
+        wandb.log({"accuracy", accuracy})
+        wandb.log({"fbeta", fbeta})
+
 
         outputs = {"loss": loss}
 

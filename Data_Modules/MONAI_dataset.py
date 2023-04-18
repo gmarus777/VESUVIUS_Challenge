@@ -1,12 +1,16 @@
 import torch
-import json
-import random
-from torch.utils.data import ConcatDataset, DataLoader
+#from torch.utils.data import ConcatDataset, DataLoader
 import pytorch_lightning as pl
 import glob
 import PIL.Image as Image
 import numpy as np
 from tqdm import tqdm
+import monai
+from monai.data import ArrayDataset, GridPatchDataset, create_test_image_3d, PatchIter, DataLoader
+from monai.transforms import Compose, ScaleIntensity
+
+
+
 from Data_Modules.Base_Dataset import Base_Dataset
 from Data_Modules.Monai_Base_Dataset import Monai_Base_Dataset
 
@@ -20,19 +24,18 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
-class Scrolls_Dataset(pl.LightningDataModule):
+class MONAI_Scrolls_Dataset(pl.LightningDataModule):
 
     def __init__(self,
-                 monai =False,
-                 buffer = 30,
+                 patch_size = 512,
                  z_start = 27,
                  z_dim = 10,
                  validation_rect = (1100, 3500, 700, 950),
                 shared_height = None,
                  downsampling =None,
-                 scroll_fragments = [1,2,3],
+                 train_scroll_fragments = [1,2],
+                 val_scroll_fragments = [3],
                  stage = 'train',
-                 shuffle=True,
                  batch_size=8,
                  num_workers =4 ,
                  on_gpu= False,
@@ -41,14 +44,15 @@ class Scrolls_Dataset(pl.LightningDataModule):
                  ):
         super().__init__()
 
-        self.monai = monai
-        self.buffer = buffer
+
+        self.patch_size = patch_size
         self.z_start = z_start
         self.z_dim = z_dim
         self.validation_rect = validation_rect
         self.shared_height = shared_height
         self.downsampling = downsampling
-        self.scroll_fragments = scroll_fragments
+        self.train_scroll_fragments = train_scroll_fragments
+        self.val_scroll_fragments =val_scroll_fragments
         self.stage = stage
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -59,11 +63,15 @@ class Scrolls_Dataset(pl.LightningDataModule):
         if self.stage.lower() == 'train':
 
 
-            z_slices = [[] for _ in range(len(self.scroll_fragments))]
-            labels =  [[] for _ in range(len(self.scroll_fragments))]
-            masks = [[] for _ in range(len(self.scroll_fragments))]
+            z_slices = [[] for _ in range(len(self.train_scroll_fragments))]
+            labels =  [[] for _ in range(len(self.train_scroll_fragments))]
+            masks = [[] for _ in range(len(self.train_scroll_fragments))]
 
-            for i in self.scroll_fragments:
+            z_slices_val =  [[] for _ in range(len( self.val_scroll_fragments))]
+            labels_val =  [[] for _ in range(len( self.val_scroll_fragments))]
+            masks_val =  [[] for _ in range(len( self.val_scroll_fragments))]
+
+            for i in self.train_scroll_fragments:
                 # get z_slices .tiffs paths
                 z_slices[i-1] += sorted(glob.glob(f"{PATH}/{'train'}/{i}/surface_volume/*.tif"))[self.z_start:self.z_start + self.z_dim]
                 # get labels
@@ -71,44 +79,76 @@ class Scrolls_Dataset(pl.LightningDataModule):
                 # get masks
                 masks[i-1] = self.load_mask('train', i)
 
-            # get images of z-slices and convert them to tensors
-            images = [[] for _ in range(len(self.scroll_fragments))]
-            for i in range(len(self.scroll_fragments)):
+            # validation part
+            for i in self.val_scroll_fragments:
+                # get z_slices .tiffs paths
+                z_slices_val[0] += sorted(glob.glob(f"{PATH}/{'train'}/{i}/surface_volume/*.tif"))[self.z_start:self.z_start + self.z_dim]
+                # get labels
+                labels_val[0] = self.load_labels('train', i)
+                # get masks
+                masks_val[0] = self.load_mask('train', i)
+
+            # get images of z-slices and convert them to tensors for train
+            images = [[] for _ in range(len(self.train_scroll_fragments))]
+            for i in range(len(self.train_scroll_fragments)):
                 images[i] = self.load_slices(z_slices[i])
+
+            # same for validation images
+            images_val = [[]]
+            images_val[0] = self.load_slices( z_slices_val[0])
+
 
             # concat images, labels and masks of different scrolls
             images_tensors = torch.cat([image for image in images], axis=-1)
             label_tensors =  torch.cat([label for label in labels], axis=-1)
             mask_tensors =  np.concatenate([mask for mask in masks], axis=-1)
+            mask_tensors = torch.from_numpy(mask_tensors)
+
+            images_tensors_val = torch.cat([image for image in images_val], axis=-1)
+            label_tensors_val = torch.cat([label for label in labels_val], axis=-1)
+            mask_tensors_val = np.concatenate([mask for mask in masks_val], axis=-1)
+            mask_tensors_val = torch.from_numpy(mask_tensors_val)
+
             del images
             del z_slices
             del labels
             del masks
 
-            # obtain train_pixesl and val_pixels
-            train_pixels , val_pixels = self.split_train_val(mask_tensors)
-            self.mask =  torch.from_numpy(mask_tensors)
-            self.image_tensors = images_tensors
-            self.train_pixels = train_pixels
-            self.label_tensors = label_tensors
+
+            #self.mask =  torch.from_numpy(mask_tensors)
+            #self.image_tensors = images_tensors
+            #self.label_tensors = label_tensors
+            #del mask_tensors
+
+            array_ds = monai.data.ArrayDataset(img=images_tensors.unsqueeze(0),
+                                               # img_transform = transform,
+                                               seg=mask_tensors.unsqueeze(0).unsqueeze(0),
+                                               # seg_transform = transform,
+                                               # label_transform =transform,
+                                               labels=label_tensors.unsqueeze(0).unsqueeze(0)
+                                               )
             del mask_tensors
-
-            if self.monai:
-                self.data_train = Monai_Base_Dataset(image_stack=images_tensors, label=label_tensors, pixels=train_pixels,
-                                               buffer=self.buffer, z_dim=self.z_dim, mask = self.mask)
-
-                self.data_val = Monai_Base_Dataset(image_stack=images_tensors, label=label_tensors, pixels=val_pixels,
-                                             buffer=self.buffer, z_dim=self.z_dim, mask = self.mask)
-
-
-            else:
-                self.data_train = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=train_pixels, buffer=self.buffer, z_dim=self.z_dim )
-                self.data_val = Base_Dataset(image_stack=images_tensors, label=label_tensors,  pixels=val_pixels,  buffer=self.buffer, z_dim=self.z_dim)
-
             del images_tensors
             del label_tensors
-            del train_pixels
-            del val_pixels
+            patch_iter = monai.data.PatchIter(patch_size=(self.patch_size, self.patch_size))
+
+            def img_seg_iter(x):
+                for im, seg, label in zip(patch_iter(x[0]), patch_iter(x[1]), patch_iter(x[2])):
+                    # uncomment this to confirm the coordinates
+                    # print("coord img:", im[1].flatten(), "coord seg:", seg[1].flatten())
+                    yield ((im[0], seg[0], label[0]),)
+
+            self.data_train = monai.data.GridPatchDataset(array_ds, patch_iter=img_seg_iter, with_coordinates=False)
+
+            array_ds_val =  monai.data.ArrayDataset(img=images_tensors_val.unsqueeze(0),
+                                               # img_transform = transform,
+                                               seg=mask_tensors_val.unsqueeze(0).unsqueeze(0),
+                                               # seg_transform = transform,
+                                               # label_transform =transform,
+                                               labels=label_tensors_val.unsqueeze(0).unsqueeze(0)
+                                               )
+
+            self.data_val = monai.data.GridPatchDataset(array_ds_val, patch_iter=img_seg_iter, with_coordinates=False)
 
 
 
@@ -132,11 +172,9 @@ class Scrolls_Dataset(pl.LightningDataModule):
         """
         return DataLoader(
             self.data_train,
-            shuffle=True,
             batch_size=self.batch_size,
+            #shuffle=True,
             num_workers=self.num_workers,
-            pin_memory=self.on_gpu,
-            #collate_fn=self.collate_function,
         )
 
     def val_dataloader(self, *args, **kwargs):
@@ -148,11 +186,9 @@ class Scrolls_Dataset(pl.LightningDataModule):
         """
         return DataLoader(
             self.data_val,
-            shuffle=False,
             batch_size=self.batch_size,
+            # shuffle=True,
             num_workers=self.num_workers,
-            pin_memory=self.on_gpu,
-            #collate_fn=self.collate_function
         )
 
     def test_dataloader(self, *args, **kwargs):
