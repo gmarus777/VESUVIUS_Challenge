@@ -11,7 +11,7 @@ from Data_Modules.Base_Dataset import Base_Dataset
 from Data_Modules.Monai_Base_Dataset import Monai_Base_Dataset
 
 
-PATH = 'kaggle/input/vesuvius-challenge/'
+PATH = 'kaggle/input/vesuvius-challenge-ink-detection/'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # scroll_1 size = 8181, 6330

@@ -24,6 +24,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
+
+
 class MONAI_Scrolls_Dataset(pl.LightningDataModule):
 
     def __init__(self,
@@ -115,9 +117,9 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
             del masks
 
 
-            #self.mask =  torch.from_numpy(mask_tensors)
-            #self.image_tensors = images_tensors
-            #self.label_tensors = label_tensors
+            #self.tensors =  {'image':images_tensors.unsqueeze(0), 'mask' :mask_tensors.unsqueeze(0).unsqueeze(0), 'label': label_tensors.unsqueeze(0).unsqueeze(0)}
+            #self.image_tensors = {'image':images_tensors}
+            #self.label_tensors = {'label': label_tensors}
             #del mask_tensors
 
             array_ds = monai.data.ArrayDataset(img=images_tensors.unsqueeze(0),
@@ -138,6 +140,8 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
                     # uncomment this to confirm the coordinates
                     # print("coord img:", im[1].flatten(), "coord seg:", seg[1].flatten())
                     yield ((im[0], seg[0], label[0]),)
+
+
 
             self.data_train = monai.data.GridPatchDataset(array_ds, patch_iter=img_seg_iter, with_coordinates=False)
             del array_ds
@@ -180,7 +184,7 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
         return DataLoader(
             self.data_train,
             batch_size=self.batch_size,
-            #shuffle=True,
+            shuffle=True,
             num_workers=self.num_workers,
         )
 

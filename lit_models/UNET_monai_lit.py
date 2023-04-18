@@ -22,8 +22,8 @@ class UNET_lit(pl.LightningModule):
         self,
 
         z_dim: int,
-        weight_decay: float = 0.0005,
-        learning_rate: float = 0.001,
+        weight_decay: float = 0.00005,
+        learning_rate: float = 0.0003,
         gamma: float = 0.85,
         milestones: List[int] = [ 40, 100, 150, 200, 250, 300, 350, 400, 450, 500],
     ):
