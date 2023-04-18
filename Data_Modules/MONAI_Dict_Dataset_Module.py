@@ -1,304 +1,185 @@
-import torch
-#from torch.utils.data import ConcatDataset, DataLoader
-import pandas as pd
-import pytorch_lightning as pl
-import glob
-import PIL.Image as Image
-import numpy as np
-from tqdm import tqdm
+
+from collections import defaultdict
+from io import StringIO
+from pathlib import Path
+from typing import Tuple
+
+import lovely_numpy as ln
 import monai
-from monai.data import ArrayDataset, GridPatchDataset, create_test_image_3d, PatchIter, DataLoader
-from monai.transforms import Compose, ScaleIntensity
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import PIL.Image as Image
+import pytorch_lightning as pl
+import seaborn as sns
+import torch
+from monai.data import CSVDataset
+from monai.data import DataLoader
+from monai.inferers import sliding_window_inference
+from monai.visualize import matshow3d
+from torchmetrics import Dice
+from torchmetrics import MetricCollection
+from tqdm.auto import tqdm
 
 
-
-from Data_Modules.Base_Dataset import Base_Dataset
-from Data_Modules.Monai_Base_Dataset import Monai_Base_Dataset
-
-
-PATH = 'kaggle/input/vesuvius-challenge-ink-detection/'
+PATH = Path().resolve().parents[0]
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+KAGGLE_DIR = PATH / "kaggle"
+
+INPUT_DIR = KAGGLE_DIR / "input"
+
+COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
+
+TRAIN_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_train_1.csv"
+TEST_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_test_1.csv"
+
+
 
 # scroll_1 size = 8181, 6330
 # scroll_2 size = 14830, 9506
 # scroll_3 size = 7606, 5249
 
 
-
-
-
-class MONAI_Scrolls_Dataset(pl.LightningDataModule):
+class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
     def __init__(self,
-                 patch_size = 512,
-                 z_start = 27,
-                 z_dim = 10,
-                 validation_rect = (1100, 3500, 700, 950),
-                shared_height = None,
-                 downsampling =None,
-                 train_scroll_fragments = [1,2],
-                 val_scroll_fragments = [3],
-                 stage = 'train',
-                 batch_size=8,
-                 num_workers =4 ,
-                 on_gpu= False,
-
+                 patch_size=512,
+                 z_start=0,
+                 z_dim=64,
+                 shared_height=None,
+                 downsampling=None,
+                 train__fragment_id=[1],
+                 val_fragment_id=[3],
+                 stage='train',
+                 batch_size=1,
+                 num_samples=1,
+                 num_workers=0,
+                 on_gpu=False,
+                 data_csv_path=None,
 
                  ):
         super().__init__()
+        self.save_hyperparameters()
 
+        self.df = pd.read_csv(data_csv_path)
+        self.keys = ("volume_npy", "mask_npy", "label_npy")
+        self.train_transform = self.train_transforms()
+        self.val_transform = self.val_transforms()
+        self.predict_transform = self.predict_transforms()
 
-        self.patch_size = patch_size
-        self.z_start = z_start
-        self.z_dim = z_dim
-        self.validation_rect = validation_rect
-        self.shared_height = shared_height
-        self.downsampling = downsampling
-        self.train_scroll_fragments = train_scroll_fragments
-        self.val_scroll_fragments =val_scroll_fragments
-        self.stage = stage
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.on_gpu = on_gpu
+    def setup(self, stage=None):
+        if stage == "fit" or stage is None:
+            train_val_df = self.df[self.df.stage == "train"].reset_index(drop=True)
 
+            train_df = train_val_df[
+                train_val_df.fragment_id != self.hparams.val_fragment_id
+                ].reset_index(drop=True)
 
-    def prepare_data(self, *args, **kwargs):
-        if self.stage.lower() == 'train':
+            val_df = train_val_df[
+                train_val_df.fragment_id == self.hparams.val_fragment_id
+                ].reset_index(drop=True)
 
+            self.train_dataset = self._dataset(train_df, self.train_transform)
+            self.val_dataset = self._dataset(val_df, self.val_transform)
 
-            z_slices = [[] for _ in range(len(self.train_scroll_fragments))]
-            labels =  [[] for _ in range(len(self.train_scroll_fragments))]
-            masks = [[] for _ in range(len(self.train_scroll_fragments))]
+            print(f"# train: {len(self.train_dataset)}")
+            print(f"# val: {len(self.val_dataset)}")
 
-            z_slices_val =  [[] for _ in range(len( self.val_scroll_fragments))]
-            labels_val =  [[] for _ in range(len( self.val_scroll_fragments))]
-            masks_val =  [[] for _ in range(len( self.val_scroll_fragments))]
+        if stage == "predict" or stage is None:
+            predict_df = self.df[self.df.stage == "test"].reset_index(drop=True)
+            self.predict_dataset = self._dataset(predict_df, self.predict_transform)
 
-            for i in self.train_scroll_fragments:
-                # get z_slices .tiffs paths
-                z_slices[i-1] += sorted(glob.glob(f"{PATH}/{'train'}/{i}/surface_volume/*.tif"))[self.z_start:self.z_start + self.z_dim]
-                # get labels
-                labels[i-1] = self.load_labels('train', i)
-                # get masks
-                masks[i-1] = self.load_mask('train', i)
+    def _dataset(self, df, transform):
+        return CSVDataset(
+            src=df,
+            transform=transform,
+        )
 
-            # validation part
-            for i in self.val_scroll_fragments:
-                # get z_slices .tiffs paths
-                z_slices_val[0] += sorted(glob.glob(f"{PATH}/{'train'}/{i}/surface_volume/*.tif"))[self.z_start:self.z_start + self.z_dim]
-                # get labels
-                labels_val[0] = self.load_labels('train', i)
-                # get masks
-                masks_val[0] = self.load_mask('train', i)
+    def train_transforms_old(self):
+        return monai.transforms.Compose(
+            [
+                monai.transforms.LoadImaged(
+                    keys="volume_npy",
+                ),
+                monai.transforms.LoadImaged(
+                    keys=("mask_npy", "label_npy"),
+                    ensure_channel_first=True,
+                ),
 
-            # get images of z-slices and convert them to tensors for train
-            images = [[] for _ in range(len(self.train_scroll_fragments))]
-            for i in range(len(self.train_scroll_fragments)):
-                images[i] = self.load_slices(z_slices[i])
+            ]
+        )
 
-            # same for validation images
-            images_val = [[]]
-            images_val[0] = self.load_slices( z_slices_val[0])
+    def train_transforms(self):
+        return monai.transforms.Compose(
+            [
+                monai.transforms.LoadImaged(
+                    keys="volume_npy",
+                ),
+                monai.transforms.LoadImaged(
+                    keys=("mask_npy", "label_npy"),
+                    ensure_channel_first=True,
+                ),
 
+                monai.transforms.RandWeightedCropd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    spatial_size=self.hparams.patch_size,
+                    num_samples=self.hparams.num_samples,
+                    w_key="mask_npy",
+                ),
+                monai.transforms.RandFlipd(
+                    keys=self.keys,
+                    prob=0.5,
+                    spatial_axis=0,
+                ),
+                monai.transforms.RandFlipd(
+                    keys=self.keys,
+                    prob=0.5,
+                    spatial_axis=1,
+                ),
+            ]
+        )
 
-            # concat images, labels and masks of different scrolls
-            images_tensors = torch.cat([image for image in images], axis=-1)
-            label_tensors =  torch.cat([label for label in labels], axis=-1)
-            mask_tensors =  np.concatenate([mask for mask in masks], axis=-1)
-            mask_tensors = torch.from_numpy(mask_tensors)
+    def val_transforms(self):
+        return monai.transforms.Compose(
+            [
+                monai.transforms.LoadImaged(
+                    keys="volume_npy",
+                ),
+                monai.transforms.LoadImaged(
+                    keys=("mask_npy", "label_npy"),
+                    ensure_channel_first=True,
+                ),
+            ]
+        )
 
-            images_tensors_val = torch.cat([image for image in images_val], axis=-1)
-            label_tensors_val = torch.cat([label for label in labels_val], axis=-1)
-            mask_tensors_val = np.concatenate([mask for mask in masks_val], axis=-1)
-            mask_tensors_val = torch.from_numpy(mask_tensors_val)
+    def predict_transforms(self):
+        return monai.transforms.Compose(
+            [
+                monai.transforms.LoadImaged(
+                    keys="volume_npy",
+                ),
+                monai.transforms.LoadImaged(
+                    keys="mask_npy",
+                    ensure_channel_first=True,
+                ),
+            ]
+        )
 
-            del images
-            del z_slices
-            del labels
-            del masks
+    def train_dataloader(self):
+        return self._dataloader(self.train_dataset, train=True)
 
+    def val_dataloader(self):
+        return self._dataloader(self.val_dataset)
 
-            #self.tensors =  {'image':images_tensors.unsqueeze(0), 'mask' :mask_tensors.unsqueeze(0).unsqueeze(0), 'label': label_tensors.unsqueeze(0).unsqueeze(0)}
-            #self.image_tensors = {'image':images_tensors}
-            #self.label_tensors = {'label': label_tensors}
-            #del mask_tensors
+    def predict_dataloader(self):
+        return self._dataloader(self.predict_dataset)
 
-            array_ds = monai.data.ArrayDataset(img=images_tensors.unsqueeze(0),
-                                               # img_transform = transform,
-                                               seg=mask_tensors.unsqueeze(0).unsqueeze(0),
-                                               # seg_transform = transform,
-                                               # label_transform =transform,
-                                               labels=label_tensors.unsqueeze(0).unsqueeze(0)
-                                               )
-            del mask_tensors
-            del images_tensors
-            del label_tensors
-
-            patch_iter = monai.data.PatchIter(patch_size=(self.patch_size, self.patch_size))
-
-            def img_seg_iter(x):
-                for im, seg, label in zip(patch_iter(x[0]), patch_iter(x[1]), patch_iter(x[2])):
-                    # uncomment this to confirm the coordinates
-                    # print("coord img:", im[1].flatten(), "coord seg:", seg[1].flatten())
-                    yield ((im[0], seg[0], label[0]),)
-
-
-
-            self.data_train = monai.data.GridPatchDataset(array_ds, patch_iter=img_seg_iter, with_coordinates=False)
-            del array_ds
-
-
-            array_ds_val =  monai.data.ArrayDataset(img=images_tensors_val.unsqueeze(0),
-                                               # img_transform = transform,
-                                               seg=mask_tensors_val.unsqueeze(0).unsqueeze(0),
-                                               # seg_transform = transform,
-                                               # label_transform =transform,
-                                               labels=label_tensors_val.unsqueeze(0).unsqueeze(0)
-                                               )
-            del mask_tensors_val
-            del images_tensors_val
-            del label_tensors_val
-
-            self.data_val = monai.data.GridPatchDataset(array_ds_val, patch_iter=img_seg_iter, with_coordinates=False)
-            del array_ds_val
-
-
-
-        # TODO: finish the same for test, note paths are different
-        elif self.stage.lower() == 'test':
-
-            # get z_slices paths
-            z_slices = [[], []]
-            for i, l in enumerate(['a','b']):
-                z_slices[i] = sorted(glob.glob(f"{PATH}/{'test'}/{l}/surface_volume/*.tif"))[self.z_star:self.z_star + self.z_dim]
-
-
-
-    def train_dataloader(self, *args, **kwargs) -> DataLoader:
-        """
-        construct a dataloader for training data
-        data is shuffled !
-        :param args:
-        :param kwargs:
-        :return:
-        """
+    def _dataloader(self, dataset, train=False):
         return DataLoader(
-            self.data_train,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
+            dataset,
+            batch_size=self.hparams.batch_size,
+            shuffle=train,
+            num_workers=self.hparams.num_workers,
         )
-
-    def val_dataloader(self, *args, **kwargs):
-        """
-
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        return DataLoader(
-            self.data_val,
-            batch_size=self.batch_size,
-            # shuffle=True,
-            num_workers=self.num_workers,
-        )
-
-    def test_dataloader(self, *args, **kwargs):
-        """
-
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        return DataLoader(
-            self.data_test,
-            shuffle=False,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.on_gpu,
-            collate_fn=self.collate_function,
-        )
-
-
-
-
-
-
-    # image_stack = torch.stack([torch.from_numpy(image) for image in images], dim=0).to(DEVICE)
-    def load_slices(self, z_slices_fnames):
-        images = []
-        for z, filename in tqdm(enumerate(z_slices_fnames)):
-            img = Image.open(filename)
-            img = self.resize(img)
-            z_slice = np.array(img, dtype="float32")/65535.0
-            images.append(z_slice)
-        return torch.stack([torch.from_numpy(image) for image in images], dim=0)#.to(DEVICE)
-
-
-
-    def load_mask(self, split, index):
-        img = Image.open(f"{PATH}/{split}/{index}/mask.png").convert('1')
-        img = self.resize(img)
-        return np.array(img)
-
-
-
-    def load_labels(self, split, index):
-        img = Image.open(f"{PATH}/{split}/{index}/inklabels.png")
-        img = self.resize(img)
-        return torch.from_numpy(np.array(img)).gt(0).float()#.to(DEVICE)
-
-
-    def resize(self, img):
-        current_width, current_height = img.size
-        aspect_ratio = current_width / current_height
-        new_width = int(self.shared_height * aspect_ratio)
-        new_size = (new_width, self.shared_height)
-        img = img.resize(new_size)
-        return img
-
-
-
-    def split_train_val(self,mask):
-        rect = self.validation_rect
-        not_border = np.zeros(mask.shape, dtype=bool)
-        not_border[self.buffer:mask.shape[0] - self.buffer, self.buffer:mask.shape[1] - self.buffer] = True
-        arr_mask = np.array(mask) * not_border
-        inside_rect = np.zeros(mask.shape, dtype=bool) * arr_mask
-        inside_rect[rect[1]:rect[1] + rect[3] + 1, rect[0]:rect[0] + rect[2] + 1] = True
-        outside_rect = np.ones(mask.shape, dtype=bool) * arr_mask
-        outside_rect[rect[1]:rect[1] + rect[3] + 1, rect[0]:rect[0] + rect[2] + 1] = False
-        pixels_inside_rect = np.argwhere(inside_rect)
-        pixels_outside_rect = np.argwhere(outside_rect)
-        return pixels_outside_rect, pixels_inside_rect
-
-    def create_df_from_mask_paths(self, stage, downsampling):
-        mask_paths = sorted(PATH.glob(f"{stage}/*/mask.png"))
-
-        df = pd.DataFrame({"mask_png": mask_paths})
-
-        df["mask_png"] = df["mask_png"].astype(str)
-
-        df["stage"] = df["mask_png"].str.split("/").str[-3]
-        df["fragment_id"] = df["mask_png"].str.split("/").str[-2]
-
-        df["mask_npy"] = df["mask_png"].str.replace(
-            stage, f"{stage}_{downsampling}", regex=False
-        )
-        df["mask_npy"] = df["mask_npy"].str.replace("input", "working", regex=False)
-        df["mask_npy"] = df["mask_npy"].str.replace("png", "npy", regex=False)
-
-        if stage == "train":
-            df["label_png"] = df["mask_png"].str.replace("mask", "inklabels", regex=False)
-            df["label_npy"] = df["mask_npy"].str.replace("mask", "inklabels", regex=False)
-
-        df["volumes_dir"] = df["mask_png"].str.replace(
-            "mask.png", "surface_volume", regex=False
-        )
-        df["volume_npy"] = df["mask_npy"].str.replace("mask", "volume", regex=False)
-
-        return df
-
-
-
 
