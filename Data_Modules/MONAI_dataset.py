@@ -130,6 +130,7 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
             del mask_tensors
             del images_tensors
             del label_tensors
+
             patch_iter = monai.data.PatchIter(patch_size=(self.patch_size, self.patch_size))
 
             def img_seg_iter(x):
@@ -139,6 +140,8 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
                     yield ((im[0], seg[0], label[0]),)
 
             self.data_train = monai.data.GridPatchDataset(array_ds, patch_iter=img_seg_iter, with_coordinates=False)
+            del array_ds
+
 
             array_ds_val =  monai.data.ArrayDataset(img=images_tensors_val.unsqueeze(0),
                                                # img_transform = transform,
@@ -147,8 +150,12 @@ class MONAI_Scrolls_Dataset(pl.LightningDataModule):
                                                # label_transform =transform,
                                                labels=label_tensors_val.unsqueeze(0).unsqueeze(0)
                                                )
+            del mask_tensors_val
+            del images_tensors_val
+            del label_tensors_val
 
             self.data_val = monai.data.GridPatchDataset(array_ds_val, patch_iter=img_seg_iter, with_coordinates=False)
+            del array_ds_val
 
 
 

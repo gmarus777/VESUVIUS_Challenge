@@ -16,6 +16,7 @@ try:
 except ModuleNotFoundError:
     pass
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 class UNET_lit(pl.LightningModule):
     def __init__(
         self,
@@ -24,7 +25,7 @@ class UNET_lit(pl.LightningModule):
         weight_decay: float = 0.0005,
         learning_rate: float = 0.001,
         gamma: float = 0.85,
-        milestones: List[int] = [ 4, 5, 6, 7, 9, 10, 12, 15, 17, 20, 25],
+        milestones: List[int] = [ 40, 100, 150, 200, 250, 300, 350, 400, 450, 500],
     ):
         super().__init__()
 
@@ -59,6 +60,7 @@ class UNET_lit(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         images, labels, masks = batch
         labels = labels.long()
+        #images, labels, masks = images, labels, masks
         outputs = self.model(images.squeeze(1))
         loss = self.loss(outputs, labels, masks)
 
@@ -76,18 +78,20 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images.squeeze(1))
         loss = self.loss(outputs, labels, masks)
         preds = torch.sigmoid(outputs.detach()).gt(.4).int()
+
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
-        fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4)
+        fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
         fbeta = fbeta_score(torch.sigmoid(outputs), labels)
 
 
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("accuracy", accuracy, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("fbeta", fbeta, on_step=True, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
-        wandb.log({"val/loss", loss})
-        wandb.log({"accuracy", accuracy})
-        wandb.log({"fbeta", fbeta})
+
+        wandb.log({"val/loss": loss})
+        wandb.log({"accuracy": accuracy})
+        wandb.log({"fbeta": fbeta})
 
 
         outputs = {"loss": loss}
