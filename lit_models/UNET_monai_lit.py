@@ -24,7 +24,8 @@ class UNET_lit(pl.LightningModule):
         z_dim= 40,
         patch_size = (512,512),
         sw_batch_size=16 ,
-        eta_min = 1e-6,
+        eta_min = 1e-7,
+        t_max = 75,
         max_epochs = 700,
         weight_decay: float = 0.00005,
         learning_rate: float = 0.0003,
@@ -109,7 +110,7 @@ class UNET_lit(pl.LightningModule):
         return loss
 
 
-    def test_step(self, batch, batch_idx):
+    def predict_step(self, batch, batch_idx):
         images = batch["volume_npy"].as_tensor()
         masks = batch["mask_npy"]
         outputs = sliding_window_inference(
@@ -145,7 +146,7 @@ class UNET_lit(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.milestones, gamma=self.gamma)
-        scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.max_epochs,  eta_min=self.hparams.eta_min, )
+        scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,  eta_min=self.hparams.eta_min, )
         return [optimizer], [scheduler]
 
     #torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.max_epochs,  eta_min=self.hparams.eta_min, )
