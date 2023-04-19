@@ -97,8 +97,8 @@ class UNET_lit(pl.LightningModule):
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
-        wandb.log({"accuracy": accuracy})
-        wandb.log({"fbeta": fbeta})
+        wandb.log({"accuracy": accuracy.as_tensor()})
+        wandb.log({"fbeta": fbeta.as_tensor()})
 
 
         outputs = {"loss": loss}
