@@ -34,7 +34,7 @@ class UNET_lit(pl.LightningModule):
         super().__init__()
 
         self.save_hyperparameters()
-        #wandb.init()
+        wandb.init()
         self.z_dim = z_dim
         self.metrics = self._init_metrics()
         self.lr = learning_rate
@@ -71,7 +71,7 @@ class UNET_lit(pl.LightningModule):
 
         self.log("train/loss", loss, on_step=True,on_epoch=True, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
-        #wandb.log({"train/loss": loss})
+        wandb.log({"train/loss": loss})
 
         outputs = {"loss": loss}
 
@@ -96,9 +96,9 @@ class UNET_lit(pl.LightningModule):
         self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
-        #wandb.log({"val/loss": loss})
-        #wandb.log({"accuracy": accuracy})
-        #wandb.log({"fbeta": fbeta})
+        wandb.log({"val/loss": loss})
+        wandb.log({"accuracy": accuracy})
+        wandb.log({"fbeta": fbeta})
 
 
         outputs = {"loss": loss}
