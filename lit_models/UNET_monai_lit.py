@@ -24,7 +24,7 @@ class UNET_lit(pl.LightningModule):
         z_dim= 40,
         patch_size = (512,512),
         sw_batch_size=16 ,
-        eta_min = 1e-7,
+        eta_min = 1e-6,
         t_max = 75,
         max_epochs = 700,
         weight_decay: float = 0.00005,
@@ -53,10 +53,10 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(16, 32, 64, 128, 256),
-            strides=(2, 2, 2, 2, 2),
-            num_res_units=2,
-            dropout=.1,
+            channels=(64, 128, 256, 512, 1024, 2048),
+            strides=(2, 2, 2, 2, 2, 2),
+            num_res_units=6,
+            dropout=.2,
         )
 
     def forward(self, x):
