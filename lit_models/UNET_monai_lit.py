@@ -69,9 +69,9 @@ class UNET_lit(pl.LightningModule):
 
         loss = self.loss(outputs, labels, masks)
 
-        self.log("train/loss", loss, on_step=True,on_epoch=True, prog_bar=True)
+        self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
-        wandb.log({"train/loss": loss})
+        wandb.log({"train/loss": loss.as_tensor()})
 
         outputs = {"loss": loss}
 
@@ -96,7 +96,7 @@ class UNET_lit(pl.LightningModule):
         self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
-        wandb.log({"val/loss": loss})
+        wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy})
         wandb.log({"fbeta": fbeta})
 
