@@ -89,19 +89,19 @@ class UNET_lit(pl.LightningModule):
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
         fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
         fbeta = fbeta_score(torch.sigmoid(outputs), labels)
-        fbeta_score_vesuvio = self.fbeta_score_vesuvio(torch.sigmoid(outputs).to(dtype=torch.long, device=DEVICE),labels, 0.4 )
+        #fbeta_score_vesuvio = self.fbeta_score_vesuvio(torch.sigmoid(outputs).to(dtype=torch.long, device=DEVICE),labels, 0.4 )
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_vesuvio", fbeta_score_vesuvio, on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("fbeta_vesuvio", fbeta_score_vesuvio, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
         wandb.log({"fbeta": fbeta.as_tensor()})
-        wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
+        #wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
 
 
         outputs = {"loss": loss}
