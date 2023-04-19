@@ -55,16 +55,16 @@ class UNET_lit(pl.LightningModule):
             channels=(16, 32, 64, 128, 256),
             strides=(2, 2, 2, 2, 2),
             num_res_units=2,
-            dropout=.3,
+            dropout=.1,
         )
 
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
-        images = batch["volume_npy"].as_tensor()
-        labels = batch["label_npy"].long()
-        masks = batch["mask_npy"]
+        images = batch["volume_npy"].as_tensor().to(DEVICE)
+        labels = batch["label_npy"].long().to(DEVICE)
+        masks = batch["mask_npy"].to(DEVICE)
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
@@ -78,9 +78,9 @@ class UNET_lit(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images = batch["volume_npy"].as_tensor()
-        labels = batch["label_npy"].long()
-        masks = batch["mask_npy"]
+        images = batch["volume_npy"].as_tensor().to(DEVICE)
+        labels = batch["label_npy"].long().to(DEVICE)
+        masks = batch["mask_npy"].to(DEVICE)
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
