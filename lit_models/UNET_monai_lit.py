@@ -89,16 +89,19 @@ class UNET_lit(pl.LightningModule):
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
         fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
         fbeta = fbeta_score(torch.sigmoid(outputs), labels)
+        fbeta_score_vesuvio = self.fbeta_score_vesuvio(preds,labels, 0.4 )
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_vesuvio", fbeta_score_vesuvio, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
         wandb.log({"fbeta": fbeta.as_tensor()})
+        wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
 
 
         outputs = {"loss": loss}
@@ -146,3 +149,19 @@ class UNET_lit(pl.LightningModule):
         return [optimizer], [scheduler]
 
     #torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.max_epochs,  eta_min=self.hparams.eta_min, )
+
+
+
+    def fbeta_score_vesuvio(self, preds, targets, threshold, beta=0.5, smooth=1e-5):
+        preds_t = torch.where(preds > threshold, 1.0, 0.0).float()
+        y_true_count = targets.sum()
+
+        ctp = preds_t[targets == 1].sum()
+        cfp = preds_t[targets == 0].sum()
+        beta_squared = beta * beta
+
+        c_precision = ctp / (ctp + cfp + smooth)
+        c_recall = ctp / (y_true_count + smooth)
+        res = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
+
+        return res
