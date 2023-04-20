@@ -56,7 +56,7 @@ class UNET_lit(pl.LightningModule):
             channels=(64, 128, 128, 256, 512,),
             strides=(2, 2, 2, 2, ),
             num_res_units=4,
-            dropout=.15,
+            dropout=.1,
         )
 
     def forward(self, x):
