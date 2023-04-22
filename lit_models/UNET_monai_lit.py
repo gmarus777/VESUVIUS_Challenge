@@ -20,12 +20,12 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 class UNET_lit(pl.LightningModule):
     def __init__(
         self,
-
+        wandb = True,
         z_dim= 32,
         patch_size = (512,512),
         sw_batch_size=16 ,
         eta_min = 1e-6,
-        t_max = 75,
+        t_max = 200,
         max_epochs = 700,
         weight_decay: float = 0.00005,
         learning_rate: float = 0.0003,
@@ -35,7 +35,8 @@ class UNET_lit(pl.LightningModule):
         super().__init__()
 
         self.save_hyperparameters()
-        wandb.init()
+        if wandb:
+            wandb.init()
         self.z_dim = z_dim
         self.metrics = self._init_metrics()
         self.lr = learning_rate

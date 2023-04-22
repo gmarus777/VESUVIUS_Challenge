@@ -8,7 +8,7 @@ import PIL.Image as Image
 import numpy as np
 from tqdm import tqdm
 from Data_Modules.Base_Dataset import Base_Dataset
-from Data_Modules.Monai_Base_Dataset import Monai_Base_Dataset
+
 
 
 PATH = 'kaggle/input/vesuvius-challenge-ink-detection/'
