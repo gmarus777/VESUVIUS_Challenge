@@ -20,7 +20,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 class UNET_lit(pl.LightningModule):
     def __init__(
         self,
-        wandb = True,
+        use_wandb = True,
         z_dim= 32,
         patch_size = (512,512),
         sw_batch_size=16 ,
@@ -35,7 +35,8 @@ class UNET_lit(pl.LightningModule):
         super().__init__()
 
         self.save_hyperparameters()
-        if wandb:
+
+        if use_wandb:
             wandb.init()
         self.z_dim = z_dim
         self.metrics = self._init_metrics()
