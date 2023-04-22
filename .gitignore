@@ -4,3 +4,4 @@ lightning_logs
 logs
 wandb
 papers
+.ipynb_checkpoints
