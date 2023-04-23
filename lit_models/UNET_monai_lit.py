@@ -90,20 +90,26 @@ class UNET_lit(pl.LightningModule):
         preds = torch.sigmoid(outputs.detach()).gt(.4).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
-        fbeta_score = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
-        fbeta = fbeta_score(torch.sigmoid(outputs), labels)
+        fbeta_score_4 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
+        fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
+        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
+        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs), labels)
+        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs), labels)
+        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs), labels)
         #fbeta_score_vesuvio = self.fbeta_score_vesuvio(torch.sigmoid(outputs).to(dtype=torch.long, device=DEVICE),labels, 0.4 )
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta", fbeta, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta", fbeta_75, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
         #self.log("fbeta_vesuvio", fbeta_score_vesuvio, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
-        wandb.log({"fbeta": fbeta.as_tensor()})
+        wandb.log({"fbeta": fbeta_4.as_tensor()})
         #wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
 
 
@@ -115,11 +121,18 @@ class UNET_lit(pl.LightningModule):
     def predict_step(self, batch, batch_idx):
         images = batch["volume_npy"].as_tensor()
         masks = batch["mask_npy"]
+        h, w = images.shape[2], images.shape[3]
+        h_mod = h % 512
+        w_mod = w % 512
+        h -= h_mod
+        w -= w_mod
         outputs = sliding_window_inference(
             inputs=images,
-            roi_size=self.hparams.patch_size,
+            roi_size= (h,w),#self.hparams.patch_size,
             sw_batch_size=self.hparams.sw_batch_size,
             predictor=self,
+            overlap=0.1,
+            mode='gaussian',
         )
         return outputs.sigmoid().squeeze()
 
