@@ -121,12 +121,44 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     ensure_channel_first=True,
                 ),
 
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
+                ),
+
+
+
                 monai.transforms.RandWeightedCropd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     spatial_size=self.hparams.patch_size,
                     num_samples=self.hparams.num_samples,
                     w_key="mask_npy",
                 ),
+
+                monai.transforms.RandAdjustContrastd(
+                    keys="volume_npy",
+                    prob=0.75,
+                ),
+
+                monai.transforms.RandCoarseDropoutd(
+                    keys="volume_npy",
+                    holes=16,
+                    spatial_size=(32, 32),
+                    fill_value=0.0,
+                    prob=0.5,
+                ),
+
+
+                monai.transforms.RandGaussianNoised(
+                    keys="volume_npy",
+                    prob=0.5,
+                    mean=0.0,
+                    std=0.2,
+                ),
+
+
+
                 monai.transforms.RandFlipd(
                     keys=self.keys,
                     prob=0.5,
