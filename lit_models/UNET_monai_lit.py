@@ -87,7 +87,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
-        preds = torch.sigmoid(outputs.detach()).gt(.4).int()
+        preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
         fbeta_score_1 = FBetaScore(task="binary", beta=.5, threshold=.1).to(DEVICE)
