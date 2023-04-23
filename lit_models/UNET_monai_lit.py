@@ -55,7 +55,7 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(64, 128, 256, 512, 1024),
+            channels=(32, 64, 128, 256, 512,),
             strides=(2, 2, 2, 2, ),
             num_res_units=4,
             dropout=0,
