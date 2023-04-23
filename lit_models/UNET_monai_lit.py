@@ -90,9 +90,11 @@ class UNET_lit(pl.LightningModule):
         preds = torch.sigmoid(outputs.detach()).gt(.4).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
+        fbeta_score_1 = FBetaScore(task="binary", beta=.5, threshold=.1).to(DEVICE)
         fbeta_score_4 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
-        fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
-        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.4).to(DEVICE)
+        fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.75).to(DEVICE)
+        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9).to(DEVICE)
+        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs), labels)
         fbeta_4 = fbeta_score_4(torch.sigmoid(outputs), labels)
         fbeta_75 = fbeta_score_75(torch.sigmoid(outputs), labels)
         fbeta_90 = fbeta_score_90(torch.sigmoid(outputs), labels)
@@ -101,15 +103,19 @@ class UNET_lit(pl.LightningModule):
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta", fbeta_75, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_1", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_75", fbeta_75, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_90", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
         #self.log("fbeta_vesuvio", fbeta_score_vesuvio, on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
-        wandb.log({"fbeta": fbeta_4.as_tensor()})
+        wandb.log({"fbeta_1": fbeta_1.as_tensor()})
+        wandb.log({"fbeta_4": fbeta_4.as_tensor()})
+        wandb.log({"fbeta_75": fbeta_75.as_tensor()})
+        wandb.log({"fbeta_90": fbeta_90.as_tensor()})
         #wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
 
 
