@@ -134,7 +134,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     distort_limit=(-0.3, 0.3),
                     mode=monai.utils.enums.GridSampleMode.BILINEAR,
                     padding_mode='zeros',
-                    device=None,
+                    device='gpu',
                     allow_missing_keys=False
                 ),
 
@@ -207,11 +207,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     ensure_channel_first=True,
                 ),
 
-                monai.transforms.NormalizeIntensityd(
-                    keys="volume_npy",
-                    nonzero=True,
-                    channel_wise=True,
-                ),
 
 
                 monai.transforms.RandWeightedCropd(
@@ -220,6 +215,13 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     num_samples=self.hparams.num_samples,
                     w_key="mask_npy",
                 ),
+
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
+                ),
+
             ]
         )
 
