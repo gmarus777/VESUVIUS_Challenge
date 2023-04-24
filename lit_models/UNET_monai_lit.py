@@ -170,6 +170,11 @@ class UNET_lit(pl.LightningModule):
         loss = monai.losses.DiceLoss(sigmoid=True)
         return monai.losses.MaskedLoss(loss)
 
+    def _init_loss_DiceCE(self):
+        loss =monai.losses.DiceCELoss(sigmoid=True)
+        return monai.losses.MaskedLoss(loss)
+
+
     def _init_metrics(self):
         metric_collection = MetricCollection(
             {
