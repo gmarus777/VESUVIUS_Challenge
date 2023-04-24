@@ -127,6 +127,17 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     channel_wise=True,
                 ),
 
+                monai.transforms.RandGridDistortiond(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    num_cells=5,
+                    prob=0.5,
+                    distort_limit=(-0.3, 0.3),
+                    mode=monai.utils.enums.GridSampleMode.BILINEAR,
+                    padding_mode='zeros',
+                    device=None,
+                    allow_missing_keys=False
+                ),
+
 
 
                 monai.transforms.RandWeightedCropd(
@@ -136,26 +147,39 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
-                monai.transforms.RandAdjustContrastd(
+                monai.transforms.RandScaleIntensityd(
                     keys="volume_npy",
-                    prob=0.75,
+                    factors=.2,
+                    prob=0.2,
+
                 ),
 
+                monai.transforms.RandAdjustContrastd(
+                    keys="volume_npy",
+                    prob=0.4,
+                ),
+
+                monai.transforms.RandGaussianNoised(
+                    keys="volume_npy",
+                    prob=0.5,
+                    mean=0.0,
+                    std=0.3,
+                ),
+
+
+
+
+
                 monai.transforms.RandCoarseDropoutd(
-                    keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
-                    holes=16,
+                    keys=("volume_npy", "mask_npy", "label_npy"),  #keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
+                    holes=2,
                     spatial_size=(32, 32),
                     fill_value=0.0,
                     prob=0.5,
                 ),
 
 
-                monai.transforms.RandGaussianNoised(
-                    keys="volume_npy",
-                    prob=0.5,
-                    mean=0.0,
-                    std=0.2,
-                ),
+
 
 
 
