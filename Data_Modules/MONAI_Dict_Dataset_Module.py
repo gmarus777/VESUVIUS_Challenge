@@ -183,6 +183,12 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     ensure_channel_first=True,
                 ),
 
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
+                ),
+
 
                 monai.transforms.RandWeightedCropd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
