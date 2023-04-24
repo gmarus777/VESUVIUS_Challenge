@@ -35,6 +35,19 @@ TRAIN_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_train_1.csv"
 TEST_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_test_1.csv"
 
 
+'''
+  monai.transforms.RandGridDistortiond(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    num_cells=5,
+                    prob=0.5,
+                    distort_limit=(-0.3, 0.3),
+                    mode=monai.utils.enums.GridSampleMode.BILINEAR,
+                    padding_mode='zeros',
+                    device='gpu',
+                    allow_missing_keys=False
+                ),
+
+'''
 
 # scroll_1 size = 8181, 6330
 # scroll_2 size = 14830, 9506
@@ -127,16 +140,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     channel_wise=True,
                 ),
 
-                monai.transforms.RandGridDistortiond(
-                    keys=("volume_npy", "mask_npy", "label_npy"),
-                    num_cells=5,
-                    prob=0.5,
-                    distort_limit=(-0.3, 0.3),
-                    mode=monai.utils.enums.GridSampleMode.BILINEAR,
-                    padding_mode='zeros',
-                    device='gpu',
-                    allow_missing_keys=False
-                ),
+
 
 
 
