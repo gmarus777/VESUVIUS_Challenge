@@ -65,22 +65,15 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return monai.networks.nets.UNETR(in_channels = 32 , #z_dim
-                                       out_channels = 1,
-                                       img_size = (512,512) ,
-                                       feature_size=16,
-                                       hidden_size=768,
-                                       mlp_dim=3072,
-                                       num_heads=12,
-                                       pos_embed='conv',
-                                       norm_name='instance', #'batch'
-                                       conv_block=True,
-                                       res_block=True,
-                                       dropout_rate=0.0,
-                                       spatial_dims=2,
-                                       qkv_bias=False,
-
-                                      )
+        return monai.networks.nets.UNet(
+                            spatial_dims=2,
+                            in_channels= self.z_dim,
+                            out_channels=1,
+                            channels=( 64, 128, 256, 512, 1024,2048),
+                            strides=(2, 2, 2, 2,2 ),
+                            num_res_units=6,
+                            dropout=0,
+                        )
 
     def forward(self, x):
         return self.model(x)
