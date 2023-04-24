@@ -65,7 +65,7 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return monai.networks.nets.UNETR(in_channels = 4 , #z_dim
+        return monai.networks.nets.UNETR(in_channels = 32 , #z_dim
                                        out_channels = 1,
                                        img_size = (512,512) ,
                                        feature_size=16,
