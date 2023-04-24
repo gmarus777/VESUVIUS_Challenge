@@ -134,11 +134,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     ensure_channel_first=True,
                 ),
 
-                monai.transforms.NormalizeIntensityd(
-                    keys="volume_npy",
-                    nonzero=True,
-                    channel_wise=True,
-                ),
 
 
 
@@ -149,6 +144,12 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spatial_size=self.hparams.patch_size,
                     num_samples=self.hparams.num_samples,
                     w_key="mask_npy",
+                ),
+
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
                 ),
 
                 monai.transforms.RandScaleIntensityd(
