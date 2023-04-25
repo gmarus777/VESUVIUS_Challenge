@@ -15,8 +15,8 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealin
 from warmup_scheduler import GradualWarmupScheduler
 from torchmetrics import Dice, FBetaScore
 from torchmetrics import MetricCollection
-from tqdm.auto import tqd
-m
+from tqdm.auto import tqdm
+
 try:
     import wandb
 except ModuleNotFoundError:
