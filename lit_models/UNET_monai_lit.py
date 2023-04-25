@@ -115,6 +115,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
+        loss_2 = self.loss_dice(outputs, labels, masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
@@ -136,6 +137,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("loss Dice", loss_2.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
@@ -144,9 +146,12 @@ class UNET_lit(pl.LightningModule):
         self.log("fbeta_83", fbeta_83, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_90", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_95", fbeta_95, on_step=False, on_epoch=True, prog_bar=True)
+
+
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
+        wandb.log({"loss dice": loss_2.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
         wandb.log({"fbeta_1": fbeta_1.as_tensor()})
         wandb.log({"fbeta_4": fbeta_4.as_tensor()})
