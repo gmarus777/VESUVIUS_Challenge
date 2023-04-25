@@ -186,6 +186,22 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spatial_axis=1,
                 ),
 
+                monai.transforms.RandGridDistortiond(
+                    keys= self.keys,
+                    num_cells=5,
+                    prob=0.3,
+                    distort_limit=(-0.3, 0.3),
+                    padding_mode='zeros',
+                    device='gpu',
+
+                ),
+
+                monai.transforms.Resized(
+                    keys= self.keys,
+                    spatial_size =(512,512),
+                    size_mode='all'
+                ),
+
                 monai.transforms.NormalizeIntensityd(
                     keys="volume_npy",
                     nonzero=True,
