@@ -83,7 +83,7 @@ class UNET_lit(pl.LightningModule):
         self.model = self._init_model()
         self.loss = self._init_loss()
         self.loss_dice =self._init_loss_DiceCE()
-        self.BCE_loss = torch.nn.BCELoss()
+        self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
 
 
