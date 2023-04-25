@@ -66,7 +66,7 @@ class UNET_lit(pl.LightningModule):
         self.milestones = milestones
 
         self.model = self._init_model()
-        self.loss = self._init_loss()
+        self.loss = self._init_loss_DiceCE()
 
 
 

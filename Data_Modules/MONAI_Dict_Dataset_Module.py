@@ -136,9 +136,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
 
 
-
-
-
                 monai.transforms.RandWeightedCropd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     spatial_size=self.hparams.patch_size,
@@ -146,16 +143,12 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
-                monai.transforms.NormalizeIntensityd(
-                    keys="volume_npy",
-                    nonzero=True,
-                    channel_wise=True,
-                ),
+
 
                 monai.transforms.RandScaleIntensityd(
                     keys="volume_npy",
                     factors=.2,
-                    prob=0.2,
+                    prob=0.5,
 
                 ),
 
@@ -168,7 +161,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     keys="volume_npy",
                     prob=0.5,
                     mean=0.0,
-                    std=0.3,
+                    std=0.4,
                 ),
 
 
@@ -191,6 +184,12 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     keys=self.keys,
                     prob=0.5,
                     spatial_axis=1,
+                ),
+
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
                 ),
             ]
         )
