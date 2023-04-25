@@ -108,13 +108,13 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
-        loss_2 = self.BCE_loss(outputs, labels)
+        #loss_2 = self.BCE_loss(outputs, labels)
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
-        self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
         wandb.log({"train/loss": loss.as_tensor()})
-        wandb.log({"loss BCE": loss_2.as_tensor()})
+        #wandb.log({"loss BCE": loss_2.as_tensor()})
 
         outputs = {"loss": loss}
 
@@ -127,7 +127,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
-        loss_2 = self.loss_dice(outputs, labels, masks)
+        #loss_2 = self.loss_dice(outputs, labels, masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
@@ -149,7 +149,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val BCE", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
+       # self.log("val BCE", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
@@ -163,7 +163,7 @@ class UNET_lit(pl.LightningModule):
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
-        wandb.log({"loss dice": loss_2.as_tensor()})
+        #wandb.log({"loss dice": loss_2.as_tensor()})
         wandb.log({"accuracy": accuracy.as_tensor()})
         wandb.log({"fbeta_1": fbeta_1.as_tensor()})
         wandb.log({"fbeta_4": fbeta_4.as_tensor()})
