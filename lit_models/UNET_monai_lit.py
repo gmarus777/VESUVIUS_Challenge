@@ -108,7 +108,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
-        loss_2 = self.BCE_loss(outputs.sigmoid(), labels)
+        loss_2 = self.BCE_loss(outputs, labels)
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
         self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
