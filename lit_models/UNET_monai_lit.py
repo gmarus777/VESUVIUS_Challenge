@@ -99,7 +99,7 @@ class UNET_lit(pl.LightningModule):
         loss_2 = self.loss_dice(outputs, labels, masks)
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
-        self.log("loss Dice", loss_2.as_tensor(), on_step=True, on_epoch=False, prog_bar=True)
+        self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
         wandb.log({"train/loss": loss.as_tensor()})
         wandb.log({"loss dice": loss_2.as_tensor()})
