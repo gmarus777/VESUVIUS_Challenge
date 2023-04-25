@@ -34,6 +34,21 @@ monai.networks.nets.UNet(
             dropout=0,
         )
 
+
+
+monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
+                              out_channels =1 ,
+                              backbone = 'efficientnet-b0',
+                              pretrained=True,
+                              decoder_channels=(1024,512, 256, 128, 64, 32,),
+                              spatial_dims=2,
+                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
+                              act=('relu', {'inplace': True}),
+                              dropout=0.0,
+                              decoder_bias=True,
+                              upsample='deconv',
+                              interp_mode='nearest',
+                              is_pad=False)
 '''
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
@@ -66,25 +81,22 @@ class UNET_lit(pl.LightningModule):
         self.milestones = milestones
 
         self.model = self._init_model()
-        self.loss = self._init_loss_DiceCE()
-        self.loss_dice = self._init_loss()
+        self.loss = self._init_loss()
+        self.loss_dice =self._init_loss_DiceCE()
+        self.BCE_loss = torch.nn.BCELoss()
 
 
 
     def _init_model(self):
-        return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
-                              out_channels =1 ,
-                              backbone = 'efficientnet-b0',
-                              pretrained=True,
-                              decoder_channels=(1024,512, 256, 128, 64, 32,),
-                              spatial_dims=2,
-                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
-                              act=('relu', {'inplace': True}),
-                              dropout=0.0,
-                              decoder_bias=True,
-                              upsample='deconv',
-                              interp_mode='nearest',
-                              is_pad=False)
+        return monai.networks.nets.UNet(
+            spatial_dims=2,
+            in_channels= self.z_dim,
+            out_channels=1,
+            channels=( 64, 128, 256, 512, 1024),
+            strides=(2, 2, 2, 2, ),
+            num_res_units=6,
+            dropout=0,
+        )
 
     def forward(self, x):
         return self.model(x)
@@ -96,13 +108,13 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         loss = self.loss(outputs, labels, masks)
-        loss_2 = self.loss_dice(outputs, labels, masks)
+        loss_2 = self.BCE_loss(outputs.sigmoid(), labels)
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
         self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
         wandb.log({"train/loss": loss.as_tensor()})
-        wandb.log({"loss dice": loss_2.as_tensor()})
+        wandb.log({"loss BCE": loss_2.as_tensor()})
 
         outputs = {"loss": loss}
 
@@ -137,7 +149,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val BCE", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
