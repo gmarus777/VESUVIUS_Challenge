@@ -173,8 +173,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
 
 
-
-
                 monai.transforms.RandCoarseDropoutd(
                     keys=("volume_npy", "mask_npy", "label_npy"),  #keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
                     holes=2,
@@ -182,10 +180,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     fill_value=0.0,
                     prob=0.5,
                 ),
-
-
-
-
 
 
                 monai.transforms.RandFlipd(
