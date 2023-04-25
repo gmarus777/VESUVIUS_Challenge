@@ -20,6 +20,7 @@ from monai.visualize import matshow3d
 from torchmetrics import Dice
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
+from monai.data.utils import decollate_batch, no_collation, pad_list_data_collate
 
 
 PATH = Path().resolve().parents[0]
@@ -169,9 +170,9 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandCoarseDropoutd(
                     keys=("volume_npy", "mask_npy", "label_npy"),  #keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
                     holes= 1,
-                    spatial_size = (16,16),
-                    max_holes =2,
-                    max_spatial_size=(64, 64),
+                    spatial_size = (8,8),
+                    max_holes =3,
+                    max_spatial_size=(96, 96),
                     fill_value=0.0,
                     prob=0.4,
                 ),
@@ -198,11 +199,11 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 ),
 
-                monai.transforms.Resized(
-                    keys= self.keys,
-                    spatial_size =(512,512),
-                    size_mode='all'
-                ),
+                #monai.transforms.Resized(
+                    #keys= self.keys,
+                    #spatial_size =(512,512),
+                    #size_mode='all'
+                #),
 
                 monai.transforms.NormalizeIntensityd(
                     keys="volume_npy",
@@ -276,5 +277,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
             batch_size=self.hparams.batch_size,
             shuffle=train,
             num_workers=self.hparams.num_workers,
+            collate_fn=pad_list_data_collate,
         )
 
