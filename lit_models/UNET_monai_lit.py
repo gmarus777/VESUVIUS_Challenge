@@ -65,15 +65,19 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return monai.networks.nets.UNet(
-                            spatial_dims=2,
-                            in_channels= self.z_dim,
-                            out_channels=1,
-                            channels=( 64, 128, 256, 512, 1024,2048),
-                            strides=(2, 2, 2, 2,2 ),
-                            num_res_units=6,
-                            dropout=0,
-                        )
+        return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
+                              out_channels =1 ,
+                              backbone = 'efficientnet-b0',
+                              pretrained=True,
+                              decoder_channels=(512, 256, 128, 64, 32,),
+                              spatial_dims=2,
+                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
+                              act=('relu', {'inplace': True}),
+                              dropout=0.0,
+                              decoder_bias=True,
+                              upsample='deconv',
+                              interp_mode='nearest',
+                              is_pad=False)
 
     def forward(self, x):
         return self.model(x)
