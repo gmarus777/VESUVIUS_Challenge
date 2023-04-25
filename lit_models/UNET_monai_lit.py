@@ -5,12 +5,18 @@ from typing import Tuple, List
 import monai
 from monai.inferers import sliding_window_inference
 import pytorch_lightning as pl
-
+import torch.nn as nn
+import math
+import time
+import numpy as np
 import torch
-
+import torch.nn as nn
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, ReduceLROnPlateau
+from warmup_scheduler import GradualWarmupScheduler
 from torchmetrics import Dice, FBetaScore
 from torchmetrics import MetricCollection
-from tqdm.auto import tqdm
+from tqdm.auto import tqd
+m
 try:
     import wandb
 except ModuleNotFoundError:
@@ -38,11 +44,11 @@ class UNET_lit(pl.LightningModule):
         z_dim= 32,
         patch_size = (512,512),
         sw_batch_size=16 ,
-        eta_min = 1e-6,
-        t_max = 200,
+        eta_min = 1e-7,
+        t_max = 50,
         max_epochs = 700,
-        weight_decay: float = 0.00005,
-        learning_rate: float = 0.0003,
+        weight_decay: float = 0.000005,
+        learning_rate: float = 0.0005,
         gamma: float = 0.85,
         milestones: List[int] = [  100, 150, 200, 250, 300, 350, 400, 450, 500],
     ):
@@ -198,26 +204,50 @@ class UNET_lit(pl.LightningModule):
         )
 
 
-    def configure_optimizers(self):
+    def configure_optimizers_old(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.milestones, gamma=self.gamma)
         scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,  eta_min=self.hparams.eta_min, )
         return [optimizer], [scheduler]
 
-    #torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.max_epochs,  eta_min=self.hparams.eta_min, )
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        scheduler = self.get_scheduler(optimizer)
+        return [optimizer], [scheduler]
+
+        #torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.max_epochs,  eta_min=self.hparams.eta_min, )
+
+
+    def get_scheduler(self, optimizer):
+        scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,
+                                                                      eta_min=self.hparams.eta_min, )
+        scheduler = GradualWarmupSchedulerV2(
+            optimizer, multiplier=10, total_epoch=1, after_scheduler=scheduler_cosine)
+
+        return scheduler
 
 
 
-    def fbeta_score_vesuvio(self, preds, targets, threshold, beta=0.5, smooth=1e-5):
-        preds_t = torch.where(preds > threshold, 1.0, 0.0).float()
-        y_true_count = targets.sum()
+class GradualWarmupSchedulerV2(GradualWarmupScheduler):
+    """
+    https://www.kaggle.com/code/underwearfitting/single-fold-training-of-resnet200d-lb0-965
+    """
+    def __init__(self, optimizer, multiplier, total_epoch, after_scheduler=None):
+        super(GradualWarmupSchedulerV2, self).__init__(
+            optimizer, multiplier, total_epoch, after_scheduler)
 
-        ctp = preds_t[targets == 1].sum()
-        cfp = preds_t[targets == 0].sum()
-        beta_squared = beta * beta
+    def get_lr(self):
+        if self.last_epoch > self.total_epoch:
+            if self.after_scheduler:
+                if not self.finished:
+                    self.after_scheduler.base_lrs = [
+                        base_lr * self.multiplier for base_lr in self.base_lrs]
+                    self.finished = True
+                return self.after_scheduler.get_lr()
+            return [base_lr * self.multiplier for base_lr in self.base_lrs]
+        if self.multiplier == 1.0:
+            return [base_lr * (float(self.last_epoch) / self.total_epoch) for base_lr in self.base_lrs]
+        else:
+            return [base_lr * ((self.multiplier - 1.) * self.last_epoch / self.total_epoch + 1.) for base_lr in self.base_lrs]
 
-        c_precision = ctp / (ctp + cfp + smooth)
-        c_recall = ctp / (y_true_count + smooth)
-        res = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
 
-        return res
