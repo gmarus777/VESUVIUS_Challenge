@@ -99,7 +99,7 @@ class UNET_lit(pl.LightningModule):
         loss_2 = self.loss_dice(outputs, labels, masks)
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
-        self.log("loss Dice", loss_2.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
+        self.log("loss Dice", loss_2.as_tensor(), on_step=True, on_epoch=False, prog_bar=True)
         self.metrics["train_metrics"](outputs, labels)
         wandb.log({"train/loss": loss.as_tensor()})
         wandb.log({"loss dice": loss_2.as_tensor()})
@@ -137,7 +137,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val Dice", loss_2.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
+        self.log("val Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
@@ -213,13 +213,13 @@ class UNET_lit(pl.LightningModule):
         )
 
 
-    def configure_optimizers_old(self):
+    def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.milestones, gamma=self.gamma)
         scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,  eta_min=self.hparams.eta_min, )
         return [optimizer], [scheduler]
 
-    def configure_optimizers(self):
+    def configure_optimizers_alternative(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         scheduler = self.get_scheduler(optimizer)
         return [optimizer], [scheduler]
