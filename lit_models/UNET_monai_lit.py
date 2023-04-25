@@ -109,7 +109,7 @@ class UNET_lit(pl.LightningModule):
         fbeta_score_6 = FBetaScore(task="binary", beta=.5, threshold=.6, ).to(DEVICE)
         fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.75, ).to(DEVICE)
         fbeta_score_83 = FBetaScore(task="binary", beta=.5, threshold=.83, ).to(DEVICE)
-        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, i).to(DEVICE)
+        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, ).to(DEVICE)
         fbeta_score_95 = FBetaScore(task="binary", beta=.5, threshold=.95, ).to(DEVICE)
         fbeta_1 = fbeta_score_1(torch.sigmoid(outputs), labels)
         fbeta_4 = fbeta_score_4(torch.sigmoid(outputs), labels)
