@@ -137,7 +137,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("loss Dice", loss_2.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
+        self.log("val Dice", loss_2.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
