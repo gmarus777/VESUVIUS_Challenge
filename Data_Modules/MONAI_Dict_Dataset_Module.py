@@ -144,16 +144,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
-                monai.transforms.RandZoomd(
-                    keys=("volume_npy", "mask_npy", "label_npy"),
-                    prob=.5,
-                    min_zoom=0.8,
-                    max_zoom=1.2,
-                    #padding_mode=NumpyPadMode.EDGE,
-                    align_corners=None,
-                    keep_size=True,
 
-                    ),
 
 
 
@@ -220,6 +211,17 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     distort_limit=(-0.3, 0.3),
                     padding_mode='zeros',
                     #device='gpu',
+
+                ),
+
+                monai.transforms.RandZoomd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    prob=.5,
+                    min_zoom=0.8,
+                    max_zoom=1.2,
+                    # padding_mode=NumpyPadMode.EDGE,
+                    align_corners=None,
+                    keep_size=True,
 
                 ),
 
