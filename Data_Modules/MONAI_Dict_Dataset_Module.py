@@ -146,7 +146,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 monai.transforms.RandZoomd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
-                    prob=1,
+                    prob=.5,
                     min_zoom=0.8,
                     max_zoom=1.2,
                     #padding_mode=NumpyPadMode.EDGE,
@@ -167,6 +167,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandAdjustContrastd(
                     keys="volume_npy",
                     prob=0.4,
+
                 ),
 
                 monai.transforms.RandGaussianNoised(
@@ -215,7 +216,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandGridDistortiond(
                     keys= self.keys,
                     num_cells=4,
-                    prob=1,
+                    prob=.4,
                     distort_limit=(-0.3, 0.3),
                     padding_mode='zeros',
                     #device='gpu',
