@@ -144,6 +144,21 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
+                monai.transforms.Rand2DElasticd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    spacing =(20,20),
+                    magnitude_range = (1,2),
+                    spatial_size=None,
+                    prob=.4,
+                    rotate_range=(0,2),
+                    shear_range=(0,2),
+                    translate_range=None,
+                    scale_range=(.2,.2),
+                    padding_mode='zeros',
+
+
+                ),
+
 
 
 
@@ -180,6 +195,17 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     prob=0.4,
                 ),
 
+                monai.transforms.RandCoarseDropoutd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    # keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
+                    holes=1,
+                    spatial_size=(8, 8),
+                    max_holes=3,
+                    max_spatial_size=(128, 128),
+                    fill_value=0.0,
+                    prob=0.4,
+                ),
+
                 monai.transforms.RandRotated(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     range_x=1.0,
@@ -190,7 +216,11 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 ),
 
+                monai.transforms.RandAxisFlipd(
+                    keys=self.keys,
+                    prob=0.4,
 
+                ),
 
 
                 monai.transforms.RandFlipd(
@@ -215,20 +245,12 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 ),
 
-                #monai.transforms.RandGridDistortiond(
-                    #keys= self.keys,
-                    #num_cells=5,
-                    #prob=.4,
-                    #distort_limit=(-0.3, 0.3),
-                    #padding_mode='zeros',
-                    #device='gpu',
 
-                #),
 
 
 
                 #monai.transforms.Resized(
-                    #keys= self.keys,
+                   # keys= self.keys,
                     #spatial_size =(512,512),
                     #size_mode='all'
                 #),
