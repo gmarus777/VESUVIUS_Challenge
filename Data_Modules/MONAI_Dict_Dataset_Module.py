@@ -265,7 +265,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     channel_wise=True,
                 ),
 
-                monai.transforms.ToTensor(),
+                monai.transforms.ToTensord(keys = self.keys),
 
             ]
         )
