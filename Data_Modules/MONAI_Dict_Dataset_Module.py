@@ -204,16 +204,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spatial_axis=1,
                 ),
 
-                monai.transforms.RandGridDistortiond(
-                    keys= self.keys,
-                    num_cells=4,
-                    prob=.4,
-                    distort_limit=(-0.3, 0.3),
-                    padding_mode='zeros',
-                    #device='gpu',
-
-                ),
-
                 monai.transforms.RandZoomd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     prob=.5,
@@ -224,6 +214,18 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     keep_size=True,
 
                 ),
+
+                monai.transforms.RandGridDistortiond(
+                    keys= self.keys,
+                    num_cells=4,
+                    prob=.4,
+                    distort_limit=(-0.3, 0.3),
+                    padding_mode='zeros',
+                    #device='gpu',
+
+                ),
+
+
 
                 #monai.transforms.Resized(
                     #keys= self.keys,
