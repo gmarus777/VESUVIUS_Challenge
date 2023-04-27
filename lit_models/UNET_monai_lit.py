@@ -65,7 +65,7 @@ class UNET_lit(pl.LightningModule):
         eta_min = 1e-7,
         t_max = 50,
         max_epochs = 700,
-        weight_decay: float = 0.000005,
+        weight_decay: float = 0.00005,
         learning_rate: float = 0.0005,
         gamma: float = 0.85,
         milestones: List[int] = [  100, 150, 200, 250, 300, 350, 400, 450, 500],
@@ -230,7 +230,7 @@ class UNET_lit(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.milestones, gamma=self.gamma)
-        scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,  eta_min=self.hparams.eta_min, )
+        scheduler =  torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hparams.t_max,  eta_min=self.hparams.eta_min,verbose =True )
         return [optimizer], [scheduler]
 
     def configure_optimizers_alternative(self):
