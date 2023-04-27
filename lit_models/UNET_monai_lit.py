@@ -1,7 +1,5 @@
 
 from typing import Tuple, List
-
-
 import monai
 from monai.inferers import sliding_window_inference
 import pytorch_lightning as pl
@@ -23,6 +21,9 @@ try:
 except ModuleNotFoundError:
     pass
 
+# ssl solution
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 '''
