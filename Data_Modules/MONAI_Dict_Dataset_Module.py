@@ -73,6 +73,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                  data_csv_path=None,
 
                  ):
+
         super().__init__()
         self.save_hyperparameters()
 
@@ -125,11 +126,13 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
         )
 
     def train_transforms(self):
+
         return monai.transforms.Compose(
             [
                 monai.transforms.LoadImaged(
                     keys="volume_npy",
                 ),
+
                 monai.transforms.LoadImaged(
                     keys=("mask_npy", "label_npy"),
                     ensure_channel_first=True,
@@ -144,6 +147,43 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
+                monai.transforms.RandAxisFlipd(
+                    keys=self.keys,
+                    prob=0.4,
+
+                ),
+
+                monai.transforms.RandFlipd(
+                    keys=self.keys,
+                    prob=0.5,
+                    spatial_axis=0,
+                ),
+                monai.transforms.RandFlipd(
+                    keys=self.keys,
+                    prob=0.5,
+                    spatial_axis=1,
+                ),
+
+                monai.transforms.RandZoomd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    prob=.5,
+                    min_zoom=0.8,
+                    max_zoom=1.2,
+                    # padding_mode=NumpyPadMode.EDGE,
+                    # align_corners=None,
+                    keep_size=True,
+
+                ),
+
+                monai.transforms.RandRotated(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    range_x=1.0,
+                    prob=0.4,
+                    keep_size=True,
+                    padding_mode='zeros',
+
+                ),
+
                 monai.transforms.Rand2DElasticd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     spacing =(20,20),
@@ -151,22 +191,18 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spatial_size=None,
                     prob=.4,
                     rotate_range=(0,2),
-                    shear_range=(0,2),
+                    shear_range=(2,2),
                     translate_range=None,
                     scale_range=(.2,.2),
                     padding_mode='zeros',
 
-
                 ),
-
-
-
 
 
                 monai.transforms.RandScaleIntensityd(
                     keys="volume_npy",
                     factors=.2,
-                    prob=0.5,
+                    prob=0.4,
 
                 ),
 
@@ -206,44 +242,8 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     prob=0.4,
                 ),
 
-                monai.transforms.RandRotated(
-                    keys=("volume_npy", "mask_npy", "label_npy"),
-                    range_x=1.0,
-                    prob=0.4,
-                    keep_size=True,
-                    padding_mode='zeros',
 
 
-                ),
-
-                monai.transforms.RandAxisFlipd(
-                    keys=self.keys,
-                    prob=0.4,
-
-                ),
-
-
-                monai.transforms.RandFlipd(
-                    keys=self.keys,
-                    prob=0.5,
-                    spatial_axis=0,
-                ),
-                monai.transforms.RandFlipd(
-                    keys=self.keys,
-                    prob=0.5,
-                    spatial_axis=1,
-                ),
-
-                monai.transforms.RandZoomd(
-                   keys=("volume_npy", "mask_npy", "label_npy"),
-                    prob=.5,
-                    min_zoom=0.8,
-                    max_zoom=1.2,
-                    #padding_mode=NumpyPadMode.EDGE,
-                    #align_corners=None,
-                    keep_size=True,
-
-                ),
 
 
 

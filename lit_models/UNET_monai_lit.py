@@ -16,11 +16,13 @@ from warmup_scheduler import GradualWarmupScheduler
 from torchmetrics import Dice, FBetaScore
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
+import segmentation_models_pytorch as smp
 
 try:
     import wandb
 except ModuleNotFoundError:
     pass
+
 
 
 '''
@@ -88,15 +90,14 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return monai.networks.nets.UNet(
-            spatial_dims=2,
-            in_channels= self.z_dim,
-            out_channels=1,
-            channels=( 64, 128, 256, 512, 1024, 2048),
-            strides=(2, 2, 2, 2, 2),
-            num_res_units=6,
-            dropout=0,
+        return  smp.Unet(
+            encoder_name='se_resnext50_32x4d',
+            encoder_weights='imagenet',
+            in_channels=self.z_dim,
+            classes=1,
+            activation=None,
         )
+
 
     def forward(self, x):
         return self.model(x)
