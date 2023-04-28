@@ -52,6 +52,17 @@ monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
                               upsample='deconv',
                               interp_mode='nearest',
                               is_pad=False)
+                              
+smp.Unet(
+            encoder_name='se_resnext50_32x4d',
+            encoder_weights='imagenet',
+            in_channels=self.z_dim,
+            classes=1,
+            activation=None,
+        )                              
+                              
+                              
+                              
 '''
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
@@ -104,16 +115,18 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return  smp.Unet(
-            encoder_name='se_resnext50_32x4d',
-            encoder_weights='imagenet',
-            in_channels=self.z_dim,
-            classes=1,
-            activation=None,
+        return  monai.networks.nets.UNet(
+            spatial_dims=2,
+            in_channels= self.z_dim,
+            out_channels=1,
+            channels=( 64, 128, 256, 512, 1024,2048),
+            strides=(2, 2, 2, 2, 2),
+            num_res_units=6,
+            dropout=0,
         )
 
     def criterion(self, y_pred, y_true, mask):
-        return 0.25 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice_masked(y_pred, y_true, mask) + 2*self.loss_focal(y_pred, y_true)
+        return 0.2 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice_masked(y_pred, y_true, mask) + 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true)
         #return self.loss_focal(y_pred, y_true)
 
