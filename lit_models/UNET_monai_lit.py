@@ -84,9 +84,13 @@ class UNET_lit(pl.LightningModule):
         self.milestones = milestones
 
         self.model = self._init_model()
-        self.loss = self._init_loss()
-        self.loss_dice =self._init_loss_DiceCE()
-        self.BCE_loss = torch.nn.BCEWithLogitsLoss()
+        #self.loss = self._init_loss()
+        #self.loss_dice =self._init_loss_DiceCE()
+        #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
+
+        self.loss_dice = smp.losses.DiceLoss(mode='binary')
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
+        self.loss = self.criterion()
 
 
 
@@ -99,6 +103,8 @@ class UNET_lit(pl.LightningModule):
             activation=None,
         )
 
+    def criterion(self, y_pred, y_true):
+        return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
@@ -109,8 +115,9 @@ class UNET_lit(pl.LightningModule):
         masks = batch["mask_npy"].to(DEVICE)
         outputs = self.model(images)
 
-        loss = self.loss(outputs, labels, masks)
-        #loss_2 = self.BCE_loss(outputs, labels)
+        #loss = self.loss(outputs, labels, masks)
+        loss = self.criterion(outputs, labels)
+
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
         #self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
@@ -128,8 +135,9 @@ class UNET_lit(pl.LightningModule):
         masks = batch["mask_npy"].to(DEVICE)
         outputs = self.model(images)
 
-        loss = self.loss(outputs, labels, masks)
+        #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
+        loss = self.criterion(outputs, labels)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
