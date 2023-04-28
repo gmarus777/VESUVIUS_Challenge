@@ -127,7 +127,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         #loss = self.loss(outputs, labels, masks)
-        loss = self.criterion(outputs, labels.float())
+        loss = self.criterion(outputs, labels.float(), masks)
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
