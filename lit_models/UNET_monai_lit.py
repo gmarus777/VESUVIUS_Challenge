@@ -166,6 +166,10 @@ class UNET_lit(pl.LightningModule):
         loss = self.criterion(outputs, labels.float(), masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
+        bce = self.loss_bce(outputs, labels)
+        dice = self.loss_dice(outputs, labels)
+        focal = self.loss_focal(outputs, labels)
+
         tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
@@ -198,6 +202,9 @@ class UNET_lit(pl.LightningModule):
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("BCE", bce, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("DICE", dice, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
 
 
@@ -221,6 +228,9 @@ class UNET_lit(pl.LightningModule):
         wandb.log({"recall": recall.item()})
         wandb.log({"precision": precision.item()})
         wandb.log({"FBETA": fbeta.item()})
+        wandb.log({"BCE": bce.as_tensor()})
+        wandb.log({"DICE": dice.item()})
+        wandb.log({"Focal": focal.item()})
         wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
 
 
