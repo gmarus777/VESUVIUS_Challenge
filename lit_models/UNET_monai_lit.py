@@ -84,7 +84,7 @@ class UNET_lit(pl.LightningModule):
         self.milestones = milestones
 
         self.model = self._init_model()
-        #self.loss = self._init_loss()
+        self.loss_dice_masked = self._init_loss()
         #self.loss_dice =self._init_loss_DiceCE()
         #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
@@ -92,7 +92,7 @@ class UNET_lit(pl.LightningModule):
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
-                                  alpha=.75,
+                                  alpha=.25,
                                   gamma=2.0,
                                   ignore_index=None,
                                   reduction='mean',
@@ -112,10 +112,10 @@ class UNET_lit(pl.LightningModule):
             activation=None,
         )
 
-    def criterion(self, y_pred, y_true):
-        #return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
+    def criterion(self, y_pred, y_true, mask):
+        return 0.25 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice_masked(y_pred, y_true, mask) + 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true)
-        return self.loss_focal(y_pred, y_true)
+        #return self.loss_focal(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
@@ -148,7 +148,8 @@ class UNET_lit(pl.LightningModule):
 
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
-        loss = self.criterion(outputs, labels.float())
+
+        loss = self.criterion(outputs, labels.float(), masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
