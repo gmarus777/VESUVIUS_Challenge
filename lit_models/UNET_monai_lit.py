@@ -195,9 +195,11 @@ class UNET_lit(pl.LightningModule):
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
-        self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
+
+
 
 
 
