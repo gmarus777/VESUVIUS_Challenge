@@ -90,6 +90,15 @@ class UNET_lit(pl.LightningModule):
 
         self.loss_dice = smp.losses.DiceLoss(mode='binary')
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
+        self.loss_focal = smp.losses.FocalLoss(
+                                mode = 'binary',
+                                  alpha=.75,
+                                  gamma=2.0,
+                                  ignore_index=None,
+                                  reduction='mean',
+                                  normalized=False,
+                                  reduced_threshold=None)
+
         self.loss = self.criterion
 
 
@@ -106,6 +115,7 @@ class UNET_lit(pl.LightningModule):
     def criterion(self, y_pred, y_true):
         #return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
         return self.loss_bce(y_pred, y_true)
+        #return self.loss_focal(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
@@ -165,7 +175,6 @@ class UNET_lit(pl.LightningModule):
         fbeta_83 = fbeta_score_83(torch.sigmoid(outputs), labels)
         fbeta_90 = fbeta_score_90(torch.sigmoid(outputs), labels)
         fbeta_95 = fbeta_score_95(torch.sigmoid(outputs), labels)
-        #fbeta_score_vesuvio = self.fbeta_score_vesuvio(torch.sigmoid(outputs).to(dtype=torch.long, device=DEVICE),labels, 0.4 )
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -202,7 +211,7 @@ class UNET_lit(pl.LightningModule):
         wandb.log({"fbeta_83": fbeta_83.as_tensor()})
         wandb.log({"fbeta_90": fbeta_90.as_tensor()})
         wandb.log({"fbeta_95": fbeta_95.as_tensor()})
-        #wandb.log({"fbeta_vesuvio": fbeta_score_vesuvio.as_tensor()})
+
 
 
         outputs = {"loss": loss}
