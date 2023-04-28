@@ -90,7 +90,7 @@ class UNET_lit(pl.LightningModule):
 
         self.loss_dice = smp.losses.DiceLoss(mode='binary')
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
-        self.loss = self.criterion()
+        self.loss = self.criterion
 
 
 
