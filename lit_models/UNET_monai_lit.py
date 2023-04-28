@@ -104,7 +104,8 @@ class UNET_lit(pl.LightningModule):
         )
 
     def criterion(self, y_pred, y_true):
-        return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
+        #return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
+        return self.loss_bce(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
