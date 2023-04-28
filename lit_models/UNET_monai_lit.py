@@ -116,7 +116,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         #loss = self.loss(outputs, labels, masks)
-        loss = self.criterion(outputs, labels)
+        loss = self.criterion(outputs, labels.float())
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
@@ -137,7 +137,7 @@ class UNET_lit(pl.LightningModule):
 
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
-        loss = self.criterion(outputs, labels)
+        loss = self.criterion(outputs, labels.float())
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
