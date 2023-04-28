@@ -126,7 +126,7 @@ class UNET_lit(pl.LightningModule):
         )
 
     def criterion(self, y_pred, y_true, mask):
-        return  0.3* self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) + self.loss_focal(y_pred, y_true)
+        return  0.25* self.loss_bce(y_pred, y_true) +  0.5*self.loss_dice(y_pred, y_true) + 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true)
         #return self.loss_focal(y_pred, y_true)

@@ -47,6 +47,23 @@ TEST_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_test_1.csv"
                     device='gpu',
                     allow_missing_keys=False
                 ),
+                
+                
+                
+                monai.transforms.Rand2DElasticd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    spacing =(20,20),
+                    magnitude_range = (1,2),
+                    spatial_size=None,
+                    prob=.4,
+                    rotate_range=(0,2),
+                    shear_range=(2,2),
+                    translate_range=None,
+                    scale_range=(.2,.2),
+                    padding_mode='zeros',
+
+                ),
+
 
 '''
 
@@ -184,19 +201,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 ),
 
-                monai.transforms.Rand2DElasticd(
-                    keys=("volume_npy", "mask_npy", "label_npy"),
-                    spacing =(20,20),
-                    magnitude_range = (1,2),
-                    spatial_size=None,
-                    prob=.4,
-                    rotate_range=(0,2),
-                    shear_range=(2,2),
-                    translate_range=None,
-                    scale_range=(.2,.2),
-                    padding_mode='zeros',
-
-                ),
 
 
                 monai.transforms.RandScaleIntensityd(
@@ -241,11 +245,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     fill_value=0.0,
                     prob=0.4,
                 ),
-
-
-
-
-
 
 
 
