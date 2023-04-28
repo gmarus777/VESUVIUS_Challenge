@@ -141,7 +141,16 @@ class UNET_lit(pl.LightningModule):
         loss = self.criterion(outputs, labels.float())
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
-        accuracy = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
+        tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
+        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
+        recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
+        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro-imagewise')
+
+
+        accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
+
+
+        # FBETas
         fbeta_score_1 = FBetaScore(task="binary", beta=.5, threshold=.1, ).to(DEVICE)
         fbeta_score_4 = FBetaScore(task="binary", beta=.5, threshold=.4, ).to(DEVICE)
         fbeta_score_6 = FBetaScore(task="binary", beta=.5, threshold=.6, ).to(DEVICE)
@@ -160,8 +169,14 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-       # self.log("val BCE", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("recall", recall, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("FBETA", fbeta, on_step=False, on_epoch=True, prog_bar=True)
+
+
+
+
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
         self.log("fbeta_6", fbeta_6, on_step=False, on_epoch=True, prog_bar=True)
@@ -174,8 +189,12 @@ class UNET_lit(pl.LightningModule):
         self.metrics["val_metrics"](outputs, labels)
 
         wandb.log({"val/loss": loss.as_tensor()})
-        #wandb.log({"loss dice": loss_2.as_tensor()})
-        wandb.log({"accuracy": accuracy.as_tensor()})
+        wandb.log({"accuracy": accuracy})
+        wandb.log({"recall": recall})
+        wandb.log({"FBETA": fbeta})
+        wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
+
+
         wandb.log({"fbeta_1": fbeta_1.as_tensor()})
         wandb.log({"fbeta_4": fbeta_4.as_tensor()})
         wandb.log({"fbeta_6": fbeta_6.as_tensor()})
