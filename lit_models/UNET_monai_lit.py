@@ -65,7 +65,7 @@ class UNET_lit(pl.LightningModule):
         eta_min = 1e-7,
         t_max = 50,
         max_epochs = 700,
-        weight_decay: float = 0.00005,
+        weight_decay: float = 0.0001,
         learning_rate: float = 0.0005,
         gamma: float = 0.85,
         milestones: List[int] = [  100, 150, 200, 250, 300, 350, 400, 450, 500],
