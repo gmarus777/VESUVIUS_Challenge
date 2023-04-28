@@ -156,6 +156,7 @@ class UNET_lit(pl.LightningModule):
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro-imagewise')
+        precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro-imagewise")
 
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
@@ -183,6 +184,7 @@ class UNET_lit(pl.LightningModule):
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
 
 
 
@@ -201,6 +203,7 @@ class UNET_lit(pl.LightningModule):
         wandb.log({"val/loss": loss.as_tensor()})
         wandb.log({"accuracy": accuracy.item()})
         wandb.log({"recall": recall.item()})
+        wandb.log({"precision": precision.item()})
         wandb.log({"FBETA": fbeta.item()})
         wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
 
