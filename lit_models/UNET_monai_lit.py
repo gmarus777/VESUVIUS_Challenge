@@ -166,9 +166,9 @@ class UNET_lit(pl.LightningModule):
         loss = self.criterion(outputs, labels.float(), masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
-        bce = self.loss_bce(outputs, labels)
-        dice = self.loss_dice(outputs, labels)
-        focal = self.loss_focal(outputs, labels)
+        bce = self.loss_bce(outputs, labels.float())
+        dice = self.loss_dice(outputs, labels.float())
+        focal = self.loss_focal(outputs, labels.float())
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
