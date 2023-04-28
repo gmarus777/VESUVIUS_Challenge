@@ -167,10 +167,10 @@ class UNET_lit(pl.LightningModule):
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
-        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="macro")
-        recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro-imagewise")
-        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro-imagewise')
-        precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro-imagewise")
+        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
+        recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
+        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
+        precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro")
 
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
