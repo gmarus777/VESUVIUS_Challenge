@@ -114,8 +114,8 @@ class UNET_lit(pl.LightningModule):
 
     def criterion(self, y_pred, y_true):
         #return 0.5 * self.loss_bce(y_pred, y_true) + 0.5 * self.loss_dice(y_pred, y_true)
-        return self.loss_bce(y_pred, y_true)
-        #return self.loss_focal(y_pred, y_true)
+        #return self.loss_bce(y_pred, y_true)
+        return self.loss_focal(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
@@ -178,10 +178,10 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("recall", recall, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("FBETA", fbeta, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
 
 
 
