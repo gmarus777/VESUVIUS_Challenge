@@ -198,6 +198,23 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 ),
 
+                monai.transforms.Rand3DElasticd(
+                    keys=("volume_npy", "mask_npy", "label_npy"),
+                    sigma_range = (-.3,.3),
+                    magnitude_range = (-.1,.1),
+                    spatial_size=None,
+                    prob=0.3,
+                    rotate_range=(-1,1),
+                    shear_range=(2,2),
+                    translate_range=None,
+                    scale_range=(.2,.2),
+                    #mode=GridSampleMode.BILINEAR,
+                    padding_mode='zeros',
+                    #device=None,
+                    #allow_missing_keys=False
+                    ),
+
+
 
                 monai.transforms.RandScaleIntensityd(
                     keys="volume_npy",
