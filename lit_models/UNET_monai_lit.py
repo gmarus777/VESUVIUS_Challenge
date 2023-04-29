@@ -110,9 +110,19 @@ class UNET_lit(pl.LightningModule):
                                   normalized=False,
                                   reduced_threshold=None)
 
-        self.loss = self.criterion
+        self.loss_old = self.criterion
+
+        self.loss = self._init_new_loss()
 
 
+    def _init_new_loss(self):
+            loss = monai.losses.DiceFocalLoss(
+                                            include_background=True,
+                                            sigmoid=False,
+                                            batch = True,
+                                            focal_weight = (.1, .9) ,
+                                            )
+            return monai.losses.MaskedLoss(loss)
 
     def _init_model(self):
         return  monai.networks.nets.UNet(
@@ -141,7 +151,7 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         #loss = self.loss(outputs, labels, masks)
-        loss = self.criterion(outputs, labels.float(), masks)
+        loss = self.loss(outputs, labels.float(), masks)
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
@@ -163,7 +173,7 @@ class UNET_lit(pl.LightningModule):
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
 
-        loss = self.criterion(outputs, labels.float(), masks)
+        loss = self.loss(outputs, labels.float(), masks)
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         bce = self.loss_bce(outputs, labels.float())
