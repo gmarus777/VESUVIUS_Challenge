@@ -118,9 +118,9 @@ class UNET_lit(pl.LightningModule):
     def _init_new_loss(self):
             loss = monai.losses.DiceFocalLoss(
                                             include_background=True,
-                                            sigmoid=False,
+                                            sigmoid=True,
                                             batch = True,
-                                            focal_weight = (.1, .9) ,
+                                            focal_weight = .25 ,
                                             )
             return monai.losses.MaskedLoss(loss)
 
