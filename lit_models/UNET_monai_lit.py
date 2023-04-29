@@ -116,7 +116,7 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_new_loss(self):
-            loss = monai.losses.DiceFocalLoss(
+            loss = monai.losses.GeneralizedDiceFocalLoss(
                                             include_background=True,
                                             sigmoid=True,
                                             batch = True,
