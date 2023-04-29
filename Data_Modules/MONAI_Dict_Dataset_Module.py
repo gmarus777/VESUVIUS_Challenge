@@ -203,7 +203,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     sigma_range = (-.3,.3),
                     magnitude_range = (-.1,.1),
                     spatial_size=None,
-                    prob=0.3,
+                    prob=0.2,
                     rotate_range=(-1,1),
                     shear_range=(2,2),
                     translate_range=None,
