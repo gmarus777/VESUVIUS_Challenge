@@ -116,11 +116,12 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_new_loss(self):
-            loss = monai.losses.GeneralizedDiceFocalLoss(
+            loss = monai.losses.DiceFocalLoss(
                                             include_background=True,
                                             sigmoid=True,
                                             batch = True,
-                                            focal_weight = .25 ,
+                                            focal_weight = .2 ,
+                                            #other_act=torch.nn.ReLU(),
                                             )
             return monai.losses.MaskedLoss(loss)
 
@@ -129,10 +130,13 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=( 32, 64, 128, 256, 512, 1024,),
+            channels=( 32, 64, 128, 256, 512, 512,),
             strides=(2, 2, 2, 2, 2),
             num_res_units=4,
             dropout=0,
+            norm = 'batch',
+            bias =False,
+
         )
 
     def criterion(self, y_pred, y_true, mask):
@@ -150,8 +154,9 @@ class UNET_lit(pl.LightningModule):
         masks = batch["mask_npy"].to(DEVICE)
         outputs = self.model(images)
 
+        # if not using masked multiple outputs by masks
         #loss = self.loss(outputs, labels, masks)
-        loss = self.loss(outputs, labels.float(), masks)
+        loss = self.loss(outputs, labels, masks)
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
@@ -180,7 +185,7 @@ class UNET_lit(pl.LightningModule):
         dice = self.loss_dice(outputs, labels.float())
         focal = self.loss_focal(outputs, labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=0.5)
+        tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.5)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
@@ -198,13 +203,13 @@ class UNET_lit(pl.LightningModule):
         fbeta_score_83 = FBetaScore(task="binary", beta=.5, threshold=.83, ).to(DEVICE)
         fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, ).to(DEVICE)
         fbeta_score_95 = FBetaScore(task="binary", beta=.5, threshold=.95, ).to(DEVICE)
-        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs), labels)
-        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs), labels)
-        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs), labels)
-        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs), labels)
-        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs), labels)
-        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs), labels)
-        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs), labels)
+        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs*masks), labels)
+        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs*masks), labels)
+        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs*masks), labels)
+        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs*masks), labels)
+        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs*masks), labels)
+        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs*masks), labels)
+        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs*masks), labels)
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)

@@ -327,6 +327,6 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
             batch_size=self.hparams.batch_size,
             shuffle=train,
             num_workers=self.hparams.num_workers,
-            collate_fn=pad_list_data_collate,
+            #collate_fn=pad_list_data_collate,
         )
 
