@@ -140,14 +140,14 @@ class UNET_lit(pl.LightningModule):
     def _init_new_loss(self):
             loss = monai.losses.DiceFocalLoss(
                                             include_background=True,
-                                            #sigmoid=True,
+                                            sigmoid=True,
                                             batch = True,
-                                            focal_weight = .25 ,
+                                            #focal_weight = .25 ,
                                             lambda_dice=1.0,
-                                            lambda_focal=.8,
-                                            other_act=torch.nn.ReLU(),
-                                            smooth_nr=1e-05,
-                                            smooth_dr=1e-05,
+                                            lambda_focal=1,
+                                            #other_act=torch.nn.ReLU(),
+                                            #smooth_nr=1e-05,
+                                            #smooth_dr=1e-05,
                                             )
 
             return monai.losses.MaskedLoss(loss)
