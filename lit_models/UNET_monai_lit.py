@@ -130,7 +130,7 @@ class UNET_lit(pl.LightningModule):
     def combined_loss(self, pred, label, mask):
 
 
-        return  self.masked_dice(pred, label, mask) +  self.masked_focal(pred, label, mask)
+        return  0.5*self.masked_dice(pred, label, mask) +  0.5*self.masked_focal(pred, label, mask)
 
 
     def _init_new_loss(self):
