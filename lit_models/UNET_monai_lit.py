@@ -104,7 +104,12 @@ class UNET_lit(pl.LightningModule):
         #self.loss_dice =self._init_loss_DiceCE()
         #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
-        self.loss_dice = smp.losses.DiceLoss(mode='binary')
+        ## SMP ##
+        self.loss_dice = smp.losses.DiceLoss(mode='binary',
+                                             log_loss=True,
+                                             smooth=0.0,
+                                             )
+
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
@@ -115,10 +120,13 @@ class UNET_lit(pl.LightningModule):
                                   normalized=False,
                                   reduced_threshold=None)
 
+
+
         self.loss_old = self.criterion
 
         self.loss = self._init_new_loss()
 
+        ### MONAI ###
         self.diceloss = monai.losses.DiceLoss(include_background=True,
                                          sigmoid=True,
                                          squared_pred=False,
@@ -138,7 +146,7 @@ class UNET_lit(pl.LightningModule):
     def criterion(self, y_pred, y_true, mask):
         #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
-        return 10*self.loss_focal(y_pred*mask, y_true) + torch.log(self.loss_dice(y_pred*mask, y_true))
+        return 10*self.loss_focal(y_pred*mask, y_true) +self.loss_dice(y_pred*mask, y_true)
 
 
     def combined_loss(self, pred, label, mask):
@@ -153,8 +161,8 @@ class UNET_lit(pl.LightningModule):
                                             sigmoid=True,
                                             batch = True,
                                             focal_weight = .1 ,
-                                            lambda_dice=1.0,
-                                            lambda_focal=1,
+                                            lambda_dice=0.5,
+                                            lambda_focal=1.0,
                                             #other_act=torch.nn.ReLU(),
                                             smooth_nr= .01, #1e-05,
                                             smooth_dr=.01 ,
