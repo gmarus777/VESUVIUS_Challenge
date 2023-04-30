@@ -114,11 +114,11 @@ class UNET_lit(pl.LightningModule):
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
-                                  alpha=.1,
+                                  #alpha=.1,
                                   gamma=2.0,
                                   ignore_index=None,
 
-                                  normalized=False,
+                                  normalized=True,
                                   reduced_threshold=None)
 
 
@@ -147,7 +147,7 @@ class UNET_lit(pl.LightningModule):
     def criterion(self, y_pred, y_true, mask):
         #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
-        return self.loss_focal(y_pred*mask, y_true) +self.loss_dice(y_pred*mask, y_true)
+        return 3*self.loss_focal(y_pred*mask, y_true) +self.loss_dice(y_pred*mask, y_true)
 
 
     def combined_loss(self, pred, label, mask):
