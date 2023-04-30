@@ -120,7 +120,7 @@ class UNET_lit(pl.LightningModule):
                                             include_background=True,
                                             sigmoid=True,
                                             batch = True,
-                                            focal_weight = .2 ,
+                                            focal_weight = .25 ,
                                             #other_act=torch.nn.ReLU(),
                                             )
             return monai.losses.MaskedLoss(loss)
@@ -130,9 +130,9 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(  64, 128, 256, 512, 512, 768),
-            strides=(2, 2, 2, 2, 2),
-            num_res_units=4,
+            channels=(  32, 64, 128, 256, 512, 768, 1024,  ),
+            strides=(2, 2, 2, 2, 2, 2, ),
+            num_res_units=6,
             dropout=0,
             norm = 'batch',
             bias =False,
@@ -185,7 +185,7 @@ class UNET_lit(pl.LightningModule):
         dice = self.loss_dice(outputs*masks, labels.float())
         focal = self.loss_focal(outputs*masks, labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.5)
+        tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.6)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
