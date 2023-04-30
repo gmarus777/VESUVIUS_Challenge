@@ -141,8 +141,11 @@ class UNET_lit(pl.LightningModule):
                                             sigmoid=True,
                                             batch = True,
                                             focal_weight = .25 ,
+                                            lambda_dice=1.0,
+                                            lambda_focal=.2,
                                             #other_act=torch.nn.ReLU(),
                                             )
+
             return monai.losses.MaskedLoss(loss)
 
     def _init_model(self):
