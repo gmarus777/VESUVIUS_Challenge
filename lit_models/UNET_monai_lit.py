@@ -118,7 +118,7 @@ class UNET_lit(pl.LightningModule):
                                   gamma=2.0,
                                   ignore_index=None,
 
-                                  normalized=True,
+                                  normalized=False,
                                   reduced_threshold=None)
 
 
