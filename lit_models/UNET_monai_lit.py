@@ -182,7 +182,7 @@ class UNET_lit(pl.LightningModule):
             out_channels=1,
             channels=(  32, 64, 128, 256, 512,  ),
             strides=(2, 2, 2, 2, ),
-            num_res_units=4,
+            num_res_units=2,
             dropout=0,
             norm = 'batch',
             bias =False,
