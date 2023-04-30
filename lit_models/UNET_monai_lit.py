@@ -161,7 +161,7 @@ class UNET_lit(pl.LightningModule):
                                             sigmoid=True,
                                             batch = True,
                                             focal_weight = .1 ,
-                                            lambda_dice=0.5,
+                                            lambda_dice=1.0,
                                             lambda_focal=1.0,
                                             #other_act=torch.nn.ReLU(),
                                             smooth_nr= .01, #1e-05,
@@ -199,8 +199,8 @@ class UNET_lit(pl.LightningModule):
         outputs = self.model(images)
 
         # if not using masked multiple outputs by masks
+        loss = self.loss_old(outputs, labels, masks)
         #loss = self.loss(outputs, labels, masks)
-        loss = self.loss(outputs, labels, masks)
         #loss = self.combined_loss(outputs, labels, masks)
 
 
