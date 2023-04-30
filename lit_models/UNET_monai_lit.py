@@ -106,7 +106,7 @@ class UNET_lit(pl.LightningModule):
 
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
-                                             log_loss=True,
+                                             log_loss=False,
                                              smooth=0.1,
 
                                              )
