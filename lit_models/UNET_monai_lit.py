@@ -122,9 +122,11 @@ class UNET_lit(pl.LightningModule):
                                          )
         self.masked_dice =  monai.losses.MaskedLoss(self.diceloss)
 
-        self.focalloss =  monai.losses.FocalLoss(include_background=False,
-                                       gamma=2.0,
-                                       weight=None, )
+        self.focalloss =  monai.losses.FocalLoss(include_background=True,
+                                       gamma=4.0,
+                                       weight=None,
+                                    focal_weight=.25,
+                                                 )
         self.masked_focal= masked_focal = monai.losses.MaskedLoss(self.focalloss)
 
     def combined_loss(self, pred, label, mask):
@@ -174,8 +176,8 @@ class UNET_lit(pl.LightningModule):
 
         # if not using masked multiple outputs by masks
         #loss = self.loss(outputs, labels, masks)
-        #loss = self.loss(outputs, labels, masks)
-        loss = self.combined_loss(outputs, labels, masks)
+        loss = self.loss(outputs, labels, masks)
+        #loss = self.combined_loss(outputs, labels, masks)
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
@@ -197,8 +199,8 @@ class UNET_lit(pl.LightningModule):
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
 
-        #loss = self.loss(outputs, labels.float(), masks)
-        loss = self.combined_loss(outputs, labels, masks)
+        loss = self.loss(outputs, labels.float(), masks)
+        #loss = self.combined_loss(outputs, labels, masks)
 
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
