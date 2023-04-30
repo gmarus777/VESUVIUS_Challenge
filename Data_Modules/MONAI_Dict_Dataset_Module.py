@@ -294,7 +294,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandWeightedCropd(
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     spatial_size=self.hparams.patch_size,
-                    num_samples=self.hparams.num_samples,
+                    num_samples=self.hparams.num_samples*2,
                     w_key="mask_npy",
                 ),
 
