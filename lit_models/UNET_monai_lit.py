@@ -142,11 +142,25 @@ class UNET_lit(pl.LightningModule):
                                          jaccard=False,
                                          batch=True
                                          )
+
+        self.monai_tverskyLoss = monai.losses.TverskyLoss(include_background=True,
+                                                          sigmoid=False,
+                                                          softmax=False,
+                                                          other_act=None,
+                                                          alpha=0.9,
+                                                          beta=0.1,
+                                                          #reduction=LossReduction.MEAN,
+                                                          smooth_nr=1e-05,
+                                                          smooth_dr=1e-05,
+                                                          batch=True
+                                                          )
+        self.monai_masked_tversky = monai.losses.MaskedLoss(self.monai_tverskyLoss)
+
         self.masked_dice =  monai.losses.MaskedLoss(self.diceloss)
 
         self.focalloss =  monai.losses.FocalLoss(include_background=True,
                                        gamma=2.0,
-                                       weight=None,
+                                       weight=.25,
                                     #focal_weight=.25,
                                                  )
         self.masked_focal= masked_focal = monai.losses.MaskedLoss(self.focalloss)
@@ -156,13 +170,14 @@ class UNET_lit(pl.LightningModule):
         #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
         #return self.loss_focal(y_pred*mask, y_true) + .8*self.loss_dice(y_pred*mask, y_true)
-        return self.loss_focal(y_pred * mask, y_true) + self.loss_tversky(y_pred * mask, y_true)
+        #return self.loss_focal(y_pred * mask, y_true) + self.loss_tversky(y_pred * mask, y_true)
+        return self.monai_tverskyLoss(y_pred, y_true, mask) +  self.masked_focal(y_pred, y_true, mask)
 
 
     def combined_loss(self, pred, label, mask):
 
 
-        return  self.masked_dice(pred, label, mask) +  self.masked_focal(pred, label, mask)
+        return  self.monai_tverskyLoss(pred, label, mask) +  self.masked_focal(pred, label, mask)
 
 
     def _init_new_loss(self):
