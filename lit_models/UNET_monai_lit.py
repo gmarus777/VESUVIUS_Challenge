@@ -114,11 +114,11 @@ class UNET_lit(pl.LightningModule):
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
-                                  #alpha=.1,
+                                  alpha=.1,
                                   gamma=2.0,
                                   ignore_index=None,
 
-                                  normalized=True,
+                                  normalized=False,
                                   reduced_threshold=None)
 
 
