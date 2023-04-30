@@ -107,9 +107,17 @@ class UNET_lit(pl.LightningModule):
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
                                              log_loss=True,
-                                             smooth=0.0,
+                                             smooth=0.1,
 
                                              )
+
+        self.loss_tversky = smp.TverskyLoss(mode='binary',
+                                            classes=None,
+                                            log_loss=False,
+                                            from_logits=True,
+                                            alpha=0.5,
+                                            beta=0.5,
+                                            gamma=1.0)
 
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
