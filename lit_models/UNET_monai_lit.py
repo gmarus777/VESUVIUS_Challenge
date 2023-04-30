@@ -115,8 +115,8 @@ class UNET_lit(pl.LightningModule):
                                             classes=None,
                                             log_loss=False,
                                             from_logits=True,
-                                            alpha=0.5,
-                                            beta=0.5,
+                                            alpha=0.8,
+                                            beta=0.2,
                                             gamma=1.0)
 
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
@@ -155,7 +155,8 @@ class UNET_lit(pl.LightningModule):
     def criterion(self, y_pred, y_true, mask):
         #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
-        return self.loss_focal(y_pred*mask, y_true) + .5*self.loss_dice(y_pred*mask, y_true)
+        #return self.loss_focal(y_pred*mask, y_true) + .8*self.loss_dice(y_pred*mask, y_true)
+        return self.loss_focal(y_pred * mask, y_true) + self.loss_tversky(y_pred * mask, y_true)
 
 
     def combined_loss(self, pred, label, mask):
@@ -244,6 +245,7 @@ class UNET_lit(pl.LightningModule):
         bce = self.loss_bce(outputs*masks, labels.float())
         dice = self.loss_dice(outputs*masks, labels.float())
         focal = self.loss_focal(outputs*masks, labels.float())
+        tversky = self.loss_tversky(outputs*masks, labels.float())
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.6)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
@@ -275,7 +277,7 @@ class UNET_lit(pl.LightningModule):
 
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        #self.log("monitor", precision.item()+recall.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("tverky", tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
