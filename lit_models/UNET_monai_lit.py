@@ -98,6 +98,9 @@ class UNET_lit(pl.LightningModule):
 
         self.model = self._init_model()
 
+
+        ## LOSSES######
+
         #self.loss_dice =self._init_loss_DiceCE()
         #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
@@ -105,7 +108,7 @@ class UNET_lit(pl.LightningModule):
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
-                                  alpha=.25,
+                                  alpha=.1,
                                   gamma=2.0,
                                   ignore_index=None,
                                   reduction='mean',
@@ -131,6 +134,13 @@ class UNET_lit(pl.LightningModule):
                                                  )
         self.masked_focal= masked_focal = monai.losses.MaskedLoss(self.focalloss)
 
+
+    def criterion(self, y_pred, y_true, mask):
+        #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
+        #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
+        return 10*self.loss_focal(y_pred*mask, y_true) + torch.log(self.loss_dice(y_pred*mask, y_true))
+
+
     def combined_loss(self, pred, label, mask):
 
 
@@ -142,15 +152,19 @@ class UNET_lit(pl.LightningModule):
                                             include_background=True,
                                             sigmoid=True,
                                             batch = True,
-                                            #focal_weight = .25 ,
+                                            focal_weight = .1 ,
                                             lambda_dice=1.0,
                                             lambda_focal=1,
                                             #other_act=torch.nn.ReLU(),
-                                            #smooth_nr=1e-05,
-                                            #smooth_dr=1e-05,
+                                            smooth_nr= .01, #1e-05,
+                                            smooth_dr=.01 ,
                                             )
 
             return monai.losses.MaskedLoss(loss)
+
+
+
+
 
     def _init_model(self):
         return  monai.networks.nets.UNet(
@@ -166,11 +180,6 @@ class UNET_lit(pl.LightningModule):
 
         )
 
-    def criterion(self, y_pred, y_true, mask):
-        return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
-        #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
-        #return self.loss_bce(y_pred, y_true)
-        #return self.loss_focal(y_pred, y_true)
 
     def forward(self, x):
         return self.model(x)
@@ -325,9 +334,7 @@ class UNET_lit(pl.LightningModule):
         loss = monai.losses.DiceLoss(sigmoid=True)
         return monai.losses.MaskedLoss(loss)
 
-    def _init_loss_DiceCE(self):
-        loss =monai.losses.DiceCELoss(sigmoid=True)
-        return monai.losses.MaskedLoss(loss)
+
 
 
     def _init_metrics(self):
