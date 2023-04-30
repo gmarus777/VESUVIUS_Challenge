@@ -65,7 +65,7 @@ smp.Unet(
                               
 '''
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class UNET_lit(pl.LightningModule):
     def __init__(
         self,
@@ -87,6 +87,8 @@ class UNET_lit(pl.LightningModule):
 
         if use_wandb:
             wandb.init()
+
+        self.use_wandb =use_wandb
         self.z_dim = z_dim
         self.metrics = self._init_metrics()
         self.lr = learning_rate
@@ -123,7 +125,7 @@ class UNET_lit(pl.LightningModule):
         self.masked_dice =  monai.losses.MaskedLoss(self.diceloss)
 
         self.focalloss =  monai.losses.FocalLoss(include_background=True,
-                                       gamma=4.0,
+                                       gamma=2.0,
                                        weight=None,
                                     #focal_weight=.25,
                                                  )
@@ -138,12 +140,14 @@ class UNET_lit(pl.LightningModule):
     def _init_new_loss(self):
             loss = monai.losses.DiceFocalLoss(
                                             include_background=True,
-                                            sigmoid=True,
+                                            #sigmoid=True,
                                             batch = True,
                                             focal_weight = .25 ,
                                             lambda_dice=1.0,
-                                            lambda_focal=.2,
-                                            #other_act=torch.nn.ReLU(),
+                                            lambda_focal=.8,
+                                            other_act=torch.nn.ReLU(),
+                                            smooth_nr=1e-05,
+                                            smooth_dr=1e-05,
                                             )
 
             return monai.losses.MaskedLoss(loss)
@@ -185,9 +189,12 @@ class UNET_lit(pl.LightningModule):
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
         #self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
+
         self.metrics["train_metrics"](outputs, labels)
-        wandb.log({"train/loss": loss.as_tensor()})
-        #wandb.log({"loss BCE": loss_2.as_tensor()})
+
+        if self.use_wandb:
+            wandb.log({"train/loss": loss.as_tensor()})
+            #wandb.log({"loss BCE": loss_2.as_tensor()})
 
         outputs = {"loss": loss}
 
@@ -266,25 +273,25 @@ class UNET_lit(pl.LightningModule):
 
 
         self.metrics["val_metrics"](outputs, labels)
+        if self.use_wandb:
+            wandb.log({"val/loss": loss.as_tensor()})
+            wandb.log({"accuracy": accuracy.item()})
+            wandb.log({"recall": recall.item()})
+            wandb.log({"precision": precision.item()})
+            wandb.log({"FBETA": fbeta.item()})
+            wandb.log({"BCE": bce.as_tensor()})
+            wandb.log({"DICE": dice.item()})
+            wandb.log({"Focal": focal.item()})
+            wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
 
-        wandb.log({"val/loss": loss.as_tensor()})
-        wandb.log({"accuracy": accuracy.item()})
-        wandb.log({"recall": recall.item()})
-        wandb.log({"precision": precision.item()})
-        wandb.log({"FBETA": fbeta.item()})
-        wandb.log({"BCE": bce.as_tensor()})
-        wandb.log({"DICE": dice.item()})
-        wandb.log({"Focal": focal.item()})
-        wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
 
-
-        wandb.log({"fbeta_1": fbeta_1.as_tensor()})
-        wandb.log({"fbeta_4": fbeta_4.as_tensor()})
-        wandb.log({"fbeta_6": fbeta_6.as_tensor()})
-        wandb.log({"fbeta_75": fbeta_75.as_tensor()})
-        wandb.log({"fbeta_83": fbeta_83.as_tensor()})
-        wandb.log({"fbeta_90": fbeta_90.as_tensor()})
-        wandb.log({"fbeta_95": fbeta_95.as_tensor()})
+            wandb.log({"fbeta_1": fbeta_1.as_tensor()})
+            wandb.log({"fbeta_4": fbeta_4.as_tensor()})
+            wandb.log({"fbeta_6": fbeta_6.as_tensor()})
+            wandb.log({"fbeta_75": fbeta_75.as_tensor()})
+            wandb.log({"fbeta_83": fbeta_83.as_tensor()})
+            wandb.log({"fbeta_90": fbeta_90.as_tensor()})
+            wandb.log({"fbeta_95": fbeta_95.as_tensor()})
 
 
 

@@ -24,7 +24,7 @@ from monai.data.utils import decollate_batch, no_collation, pad_list_data_collat
 
 
 PATH = Path().resolve().parents[0]
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 KAGGLE_DIR = PATH / "kaggle"
 
