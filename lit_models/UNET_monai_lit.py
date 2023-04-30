@@ -226,7 +226,8 @@ class UNET_lit(pl.LightningModule):
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
 
-        loss = self.loss(outputs, labels.float(), masks)
+        #loss = self.loss(outputs, labels.float(), masks)
+        loss = self.loss_old(outputs, labels, masks)
         #loss = self.combined_loss(outputs, labels, masks)
 
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
