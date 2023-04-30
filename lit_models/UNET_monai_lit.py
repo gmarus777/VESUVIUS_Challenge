@@ -95,7 +95,7 @@ class UNET_lit(pl.LightningModule):
         self.milestones = milestones
 
         self.model = self._init_model()
-        self.loss_dice_masked = self._init_loss()
+
         #self.loss_dice =self._init_loss_DiceCE()
         #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
@@ -113,6 +113,24 @@ class UNET_lit(pl.LightningModule):
         self.loss_old = self.criterion
 
         self.loss = self._init_new_loss()
+
+        self.diceloss = monai.losses.DiceLoss(include_background=True,
+                                         sigmoid=True,
+                                         squared_pred=False,
+                                         jaccard=False,
+                                         batch=True
+                                         )
+        self.masked_dice =  monai.losses.MaskedLoss(self.diceloss)
+
+        self.focalloss =  monai.losses.FocalLoss(include_background=False,
+                                       gamma=2.0,
+                                       weight=None, )
+        self.masked_focal= masked_focal = monai.losses.MaskedLoss(self.focalloss)
+
+    def combined_loss(self, pred, label, mask):
+
+
+        return  self.masked_dice(pred, label, mask) +  self.masked_focal(pred, label, mask)
 
 
     def _init_new_loss(self):
@@ -156,7 +174,8 @@ class UNET_lit(pl.LightningModule):
 
         # if not using masked multiple outputs by masks
         #loss = self.loss(outputs, labels, masks)
-        loss = self.loss(outputs, labels, masks)
+        #loss = self.loss(outputs, labels, masks)
+        loss = self.combined_loss(outputs, labels, masks)
 
 
         self.log("train/loss", loss.as_tensor(), on_step=True,on_epoch=True, prog_bar=True)
@@ -178,7 +197,9 @@ class UNET_lit(pl.LightningModule):
         #loss = self.loss(outputs, labels, masks)
         #loss_2 = self.loss_dice(outputs, labels, masks)
 
-        loss = self.loss(outputs, labels.float(), masks)
+        #loss = self.loss(outputs, labels.float(), masks)
+        loss = self.combined_loss(outputs, labels, masks)
+
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
         bce = self.loss_bce(outputs*masks, labels.float())
