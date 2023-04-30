@@ -107,7 +107,7 @@ class UNET_lit(pl.LightningModule):
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
                                              log_loss=False,
-                                             smooth=0.1,
+                                             #smooth=0.1,
 
                                              )
 
@@ -155,7 +155,7 @@ class UNET_lit(pl.LightningModule):
     def criterion(self, y_pred, y_true, mask):
         #return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
-        return 3*self.loss_focal(y_pred*mask, y_true) +self.loss_dice(y_pred*mask, y_true)
+        return self.loss_focal(y_pred*mask, y_true) + .5*self.loss_dice(y_pred*mask, y_true)
 
 
     def combined_loss(self, pred, label, mask):
