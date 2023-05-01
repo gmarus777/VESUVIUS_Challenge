@@ -154,15 +154,18 @@ class UNET_lit(pl.LightningModule):
                                                           smooth_dr=1e-05,
                                                           batch=True
                                                           )
+
+        self.focalloss = monai.losses.FocalLoss(include_background=True,
+                                                gamma=2.0,
+                                                weight=.25,
+                                                # focal_weight=.25,
+                                                )
+
         self.monai_masked_tversky = monai.losses.MaskedLoss(self.monai_tverskyLoss)
 
         self.masked_dice =  monai.losses.MaskedLoss(self.diceloss)
 
-        self.focalloss =  monai.losses.FocalLoss(include_background=True,
-                                       gamma=2.0,
-                                       weight=.25,
-                                    #focal_weight=.25,
-                                                 )
+
         self.masked_focal = monai.losses.MaskedLoss(self.focalloss)
 
 
@@ -261,6 +264,8 @@ class UNET_lit(pl.LightningModule):
         dice = self.loss_dice(outputs*masks, labels.float())
         focal = self.loss_focal(outputs*masks, labels.float())
         tversky = self.loss_tversky(outputs*masks, labels.float())
+        monai_focal = self.masked_focal(outputs, labels, masks)
+        monai_tversky= self.monai_masked_tversky(outputs, labels, masks)
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.6)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
@@ -297,6 +302,8 @@ class UNET_lit(pl.LightningModule):
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("Monai Focal", monai_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("Monai Tversky", monai_tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE", dice, on_step=False, on_epoch=True, prog_bar=True)
         self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
@@ -323,6 +330,8 @@ class UNET_lit(pl.LightningModule):
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
             wandb.log({"FBETA": fbeta.item()})
+            wandb.log({"Monai Focal": monai_focal.item()})
+            wandb.log({"Monai Tversky": monai_tversky.item()})
             wandb.log({"BCE": bce.as_tensor()})
             wandb.log({"DICE": dice.item()})
             wandb.log({"Focal": focal.item()})
