@@ -156,7 +156,7 @@ class UNET_lit(pl.LightningModule):
                                                           )
 
         self.focalloss = monai.losses.FocalLoss(include_background=True,
-                                                gamma=2.0,
+                                                gamma=1.0,
                                                 weight=.1,
                                                 # focal_weight=.25,
                                                 )
@@ -174,7 +174,9 @@ class UNET_lit(pl.LightningModule):
         #return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
         #return self.loss_focal(y_pred*mask, y_true) + .8*self.loss_dice(y_pred*mask, y_true)
         #return self.loss_focal(y_pred * mask, y_true) + self.loss_tversky(y_pred * mask, y_true)
-        return self.monai_masked_tversky(y_pred, y_true, mask) +  self.masked_focal(y_pred, y_true, mask)
+        #return self.monai_masked_tversky(y_pred, y_true, mask) +  self.masked_focal(y_pred, y_true, mask)
+
+        return self.monai_masked_tversky(y_pred, y_true, mask) +  self.loss_bce(y_pred*mask, y_true)
 
 
     def combined_loss(self, pred, label, mask):
