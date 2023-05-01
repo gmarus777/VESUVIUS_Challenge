@@ -15,6 +15,8 @@ from torchmetrics import Dice, FBetaScore
 from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 import segmentation_models_pytorch as smp
+from fastai.conv_learner import *
+from fastai.dataset import *
 
 try:
     import wandb
