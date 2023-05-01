@@ -106,7 +106,7 @@ class UNET_lit(pl.LightningModule):
 
         self.model = self._init_model()
 
-        self.loss_old = MixedLoss(10.0, 2.0) #self.criterion
+        self.loss_old = self.criterion # MixedLoss(10.0, 2.0) #self.criterion
 
         self.loss = self._init_new_loss()
 
@@ -190,7 +190,8 @@ class UNET_lit(pl.LightningModule):
         #return self.monai_masked_tversky(y_pred, y_true, mask) +  self.masked_focal(y_pred, y_true, mask)
 
         #return self.monai_masked_tversky(y_pred, y_true, mask) +  self.loss_bce(y_pred*mask, y_true.float())
-        return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
+        #return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
+        return self.loss_bce(y_pred*mask, y_true.float())
 
 
 
