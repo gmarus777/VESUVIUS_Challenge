@@ -108,6 +108,10 @@ class UNET_lit(pl.LightningModule):
         #self.loss_dice =self._init_loss_DiceCE()
         #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
 
+        # MY LOSS FUNCITONS
+
+        self.mine_focal = FocalLoss(2)
+
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
                                              log_loss=False,
@@ -267,6 +271,7 @@ class UNET_lit(pl.LightningModule):
         tversky = self.loss_tversky(outputs*masks, labels.float())
         monai_focal = self.masked_focal(outputs, labels, masks)
         monai_tversky= self.monai_masked_tversky(outputs, labels, masks)
+        my_focal = self.mine_focal(outputs*masks, labels.float())
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.6)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
@@ -305,6 +310,7 @@ class UNET_lit(pl.LightningModule):
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("Monai Focal", monai_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("Monai Tversky", monai_tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("My  Focal", my_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE", dice, on_step=False, on_epoch=True, prog_bar=True)
         self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
@@ -333,6 +339,7 @@ class UNET_lit(pl.LightningModule):
             wandb.log({"FBETA": fbeta.item()})
             wandb.log({"Monai Focal": monai_focal.item()})
             wandb.log({"Monai Tversky": monai_tversky.item()})
+            wandb.log({"My Focal": my_focal.item()})
             wandb.log({"BCE": bce.as_tensor()})
             wandb.log({"DICE": dice.item()})
             wandb.log({"Focal": focal.item()})
@@ -444,3 +451,21 @@ class GradualWarmupSchedulerV2(GradualWarmupScheduler):
             return [base_lr * ((self.multiplier - 1.) * self.last_epoch / self.total_epoch + 1.) for base_lr in self.base_lrs]
 
 
+class FocalLoss(nn.Module):
+    def __init__(self, gamma):
+        super().__init__()
+        self.gamma = gamma
+
+    def forward(self, input, target):
+        if not (target.size() == input.size()):
+            raise ValueError("Target size ({}) must be the same as input size ({})"
+                             .format(target.size(), input.size()))
+
+        max_val = (-input).clamp(min=0)
+        loss = input - input * target + max_val + \
+               ((-max_val).exp() + (-input - max_val).exp()).log()
+
+        invprobs = F.logsigmoid(-input * (target * 2.0 - 1.0))
+        loss = (invprobs * self.gamma).exp() * loss
+
+        return loss.mean()
