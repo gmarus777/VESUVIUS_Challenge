@@ -103,11 +103,14 @@ class UNET_lit(pl.LightningModule):
 
         self.model = self._init_model()
 
+        self.loss_old = MixedLoss(10.0, 2.0) #self.criterion
+
+        self.loss = self._init_new_loss()
+
 
         ## LOSSES######
 
-        #self.loss_dice =self._init_loss_DiceCE()
-        #self.BCE_loss = torch.nn.BCEWithLogitsLoss()
+
 
         # MY LOSS FUNCITONS
 
@@ -140,9 +143,7 @@ class UNET_lit(pl.LightningModule):
 
 
 
-        self.loss_old = self.criterion
 
-        self.loss = self._init_new_loss()
 
         ### MONAI ###
         self.diceloss = monai.losses.DiceLoss(include_background=True,
@@ -188,11 +189,6 @@ class UNET_lit(pl.LightningModule):
         #return self.monai_masked_tversky(y_pred, y_true, mask) +  self.loss_bce(y_pred*mask, y_true.float())
         return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
 
-
-    def combined_loss(self, pred, label, mask):
-
-
-        return  self.monai_tverskyLoss(pred, label, mask) +  self.masked_focal(pred, label, mask)
 
 
     def _init_new_loss(self):
@@ -471,3 +467,28 @@ class FocalLoss(nn.Module):
         loss = (invprobs * self.gamma).exp() * loss
 
         return loss.mean()
+
+
+def dice_loss(input, target):
+    input = torch.sigmoid(input)
+    smooth = 1.0
+
+    iflat = input.view(-1)
+    tflat = target.view(-1)
+    intersection = (iflat * tflat).sum()
+
+    return ((2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth))
+
+
+
+class MixedLoss(nn.Module):
+    def __init__(self, alpha, gamma):
+        super().__init__()
+        self.alpha = alpha
+        self.focal = FocalLoss(gamma)
+
+    def forward(self, input, target, mask):
+        loss = self.alpha * self.focal(input*mask, target) - torch.log(dice_loss(input*mask, target))
+        return loss.mean()
+
+
