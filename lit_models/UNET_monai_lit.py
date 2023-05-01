@@ -27,6 +27,9 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
+
+THRESHOLD = .4
+
 '''
  monai.networks.nets.UNet(
             spatial_dims=2,
@@ -212,7 +215,7 @@ class UNET_lit(pl.LightningModule):
 
     def _init_model(self):
         return  smp.Unet(
-            encoder_name='se_resnext50_32x4d',
+            encoder_name= 'efficientnet-b0',#'se_resnext50_32x4d',
             encoder_weights='imagenet',
             in_channels=self.z_dim,
             classes=1,
@@ -271,7 +274,7 @@ class UNET_lit(pl.LightningModule):
         monai_tversky= self.monai_masked_tversky(outputs, labels, masks)
         my_focal = self.mine_focal(outputs*masks, labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=0.6)
+        tp, fp, fn, tn = smp.metrics.get_stats(outputs*masks, labels.long(), mode='binary', threshold=THRESHOLD)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
