@@ -157,7 +157,7 @@ class UNET_lit(pl.LightningModule):
 
         self.focalloss = monai.losses.FocalLoss(include_background=True,
                                                 gamma=2.0,
-                                                weight=.25,
+                                                weight=.1,
                                                 # focal_weight=.25,
                                                 )
 
