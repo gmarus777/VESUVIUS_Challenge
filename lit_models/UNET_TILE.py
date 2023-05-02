@@ -241,7 +241,7 @@ class UNET_TILE_lit(pl.LightningModule):
         self.metrics["train_metrics"](outputs, labels)
 
         if self.use_wandb:
-            wandb.log({"train/loss": loss.as_tensor()})
+            wandb.log({"train/loss": loss})
             # wandb.log({"loss BCE": loss_2.as_tensor()})
 
         outputs = {"loss": loss}
@@ -335,13 +335,13 @@ class UNET_TILE_lit(pl.LightningModule):
             #wandb.log({"Focal": focal.item()})
             wandb.log({"accuracy_simple": accuracy_simple})
 
-            wandb.log({"fbeta_1": fbeta_1.as_tensor()})
-            wandb.log({"fbeta_4": fbeta_4.as_tensor()})
-            wandb.log({"fbeta_6": fbeta_6.as_tensor()})
-            wandb.log({"fbeta_75": fbeta_75.as_tensor()})
-            wandb.log({"fbeta_83": fbeta_83.as_tensor()})
-            wandb.log({"fbeta_90": fbeta_90.as_tensor()})
-            wandb.log({"fbeta_95": fbeta_95.as_tensor()})
+            wandb.log({"fbeta_1": fbeta_1})
+            wandb.log({"fbeta_4": fbeta_4})
+            wandb.log({"fbeta_6": fbeta_6})
+            wandb.log({"fbeta_75": fbeta_75})
+            wandb.log({"fbeta_83": fbeta_83})
+            wandb.log({"fbeta_90": fbeta_90})
+            wandb.log({"fbeta_95": fbeta_95})
 
         outputs = {"loss": loss}
 
