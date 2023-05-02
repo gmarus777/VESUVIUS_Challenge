@@ -164,7 +164,7 @@ class UNET_lit(pl.LightningModule):
                                                           beta=0.5,
                                                           #reduction=LossReduction.MEAN,
                                                           smooth_nr=0,
-                                                          smooth_dr=1e-05,
+                                                          smooth_dr=1e-06,
                                                           batch=True
                                                           )
 
@@ -189,7 +189,7 @@ class UNET_lit(pl.LightningModule):
         #return self.loss_focal(y_pred * mask, y_true) + self.loss_tversky(y_pred * mask, y_true)
         #return self.monai_masked_tversky(y_pred, y_true, mask) +  self.masked_focal(y_pred, y_true, mask)
 
-        return 0.25*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
+        return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         #return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         #return self.loss_bce(y_pred*mask, y_true.float())
 
