@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 from tqdm.auto import tqdm
 
 
-PATCH_SIZE =224
+PATCH_SIZE =256
 Z_DIM = 16
 
 

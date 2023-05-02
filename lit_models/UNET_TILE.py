@@ -26,7 +26,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-THRESHOLD = .5
+THRESHOLD = .4
 
 '''
  monai.networks.nets.UNet(
@@ -71,7 +71,7 @@ smp.Unet(
 
 '''
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
 
 class UNET_TILE_lit(pl.LightningModule):
@@ -210,12 +210,12 @@ class UNET_TILE_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels=self.z_dim,
             out_channels=1,
-            channels=(32, 64, 128, 256, 512,),
-            strides=(2, 2, 2, 2,),
+            channels=(16, 32, 64, 128, 256, 512,),
+            strides=(2, 2, 2, 2,2),
             num_res_units=2,
             dropout=0,
             norm='batch',
-            # bias =False,
+            bias =False,
 
         )
 
@@ -267,13 +267,14 @@ class UNET_TILE_lit(pl.LightningModule):
 
         bce = self.loss_bce(outputs , labels.float())
         dice = self.loss_dice(outputs, labels.float())
-        focal = self.loss_focal(outputs , labels.float())
-        tversky = self.loss_tversky(outputs , labels.float())
-        monai_focal = self.masked_focal(outputs, labels)
-        monai_tversky = self.monai_masked_tversky(outputs, labels)
-        my_focal = self.mine_focal(outputs , labels.float())
+        #focal = self.loss_focal(outputs , labels.float())
+        #tversky = self.loss_tversky(outputs , labels.float())
+        #monai_focal = self.masked_focal(outputs, labels)
+        #monai_tversky = self.monai_masked_tversky(outputs, labels)
+        #my_focal = self.mine_focal(outputs , labels.float())
 
         tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=THRESHOLD)
+        tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
@@ -298,17 +299,17 @@ class UNET_TILE_lit(pl.LightningModule):
         fbeta_95 = fbeta_score_95(torch.sigmoid(outputs ), labels)
 
         self.log("val_loss", loss.item(), on_step=False, on_epoch=True, prog_bar=True)
-        self.log("tverky", tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("tverky", tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
-        self.log("Monai Focal", monai_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
-        self.log("Monai Tversky", monai_tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
-        self.log("My  Focal", my_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("Monai Focal", monai_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("Monai Tversky", monai_tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("My  Focal", my_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE", dice, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy_simple", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
 
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
@@ -326,12 +327,12 @@ class UNET_TILE_lit(pl.LightningModule):
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
             wandb.log({"FBETA": fbeta.item()})
-            wandb.log({"Monai Focal": monai_focal.item()})
-            wandb.log({"Monai Tversky": monai_tversky.item()})
-            wandb.log({"My Focal": my_focal.item()})
+           # wandb.log({"Monai Focal": monai_focal.item()})
+            #wandb.log({"Monai Tversky": monai_tversky.item()})
+            #wandb.log({"My Focal": my_focal.item()})
             wandb.log({"BCE": bce.as_tensor()})
             wandb.log({"DICE": dice.item()})
-            wandb.log({"Focal": focal.item()})
+            #wandb.log({"Focal": focal.item()})
             wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
 
             wandb.log({"fbeta_1": fbeta_1.as_tensor()})
