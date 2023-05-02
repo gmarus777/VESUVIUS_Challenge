@@ -123,7 +123,7 @@ class UNET_lit(pl.LightningModule):
         # Image one has ratio 8
         # Image two has ratio 7
         # Image 3 has ratio 12
-        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight = torch.tensor(8))
+        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight = torch.tensor(2))
 
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
@@ -140,7 +140,7 @@ class UNET_lit(pl.LightningModule):
                                             beta=0.2,
                                             gamma=1.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(3))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(2))
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
                                   #alpha=.1,
