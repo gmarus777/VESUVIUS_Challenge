@@ -140,7 +140,7 @@ class UNET_lit(pl.LightningModule):
                                             beta=0.2,
                                             gamma=1.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(8))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(3))
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
                                   #alpha=.1,
@@ -198,7 +198,7 @@ class UNET_lit(pl.LightningModule):
         #return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         #return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         #return self.loss_bce(y_pred*mask, y_true.float())
-        return self.weighted_bce_loss(y_pred*mask, y_true.float())
+        return self.self.loss_bce(y_pred*mask, y_true.float())
 
 
 
