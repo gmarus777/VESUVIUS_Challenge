@@ -43,6 +43,7 @@ class CFG:
     comp_dataset_path = COMPETITION_DATA_DIR
     num_workers = 8
     on_gpu = True
+    test_fragment_id = ['a','b']
     
     
 
@@ -114,6 +115,33 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
                     valid_xyxys.append([x1, y1, x2, y2])
 
         return valid_images, valid_masks, valid_xyxys
+
+    def get_test_dataset(self):
+        for fragment_id in self.cfg.val_fragment_id:
+            test_images = self.read_image_test(fragment_id)
+
+    def read_image_test(self,fragment_id):
+        images = []
+
+        # idxs = range(65)
+        mid = 65 // 2
+        start = mid - self.cfg.z_dim // 2
+        end = mid + self.cfg.z_dim // 2
+        idxs = range(start, end)
+
+        for i in tqdm(idxs):
+            image = cv2.imread(COMPETITION_DATA_DIR_str + f"test/{fragment_id}/surface_volume/{i:02}.tif", 0)
+
+            pad0 = (self.cfg.patch_size - image.shape[0] % self.cfg.tile_size)
+            pad1 = (self.cfg.patch_size - image.shape[1] % self.cfg.tile_size)
+
+            image = np.pad(image, [(0, pad0), (0, pad1)], constant_values=0)
+
+            images.append(image)
+        images = np.stack(images, axis=2)
+
+        return images
+
 
     def read_image_mask(self, fragment_id):
 
