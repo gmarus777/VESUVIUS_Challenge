@@ -119,7 +119,7 @@ class UNET_lit(pl.LightningModule):
         # Image one has ratio 8
         # Image two has ratio 7
         # Image 3 has ratio 12
-        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(4))
+        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(2))
 
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
@@ -136,7 +136,7 @@ class UNET_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(4))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(2))
         self.loss_focal = smp.losses.FocalLoss(
             mode='binary',
             # alpha=.1,
@@ -178,7 +178,7 @@ class UNET_lit(pl.LightningModule):
 
         self.masked_focal = monai.losses.MaskedLoss(self.focalloss)
 
-    def criterion(self, y_pred, y_true, mask):
+    def criterion(self, y_pred, y_true):
         # return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
         # return self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true,) +  self.loss_focal(y_pred, y_true)
         # return self.loss_focal(y_pred*mask, y_true) + .8*self.loss_dice(y_pred*mask, y_true)
@@ -188,7 +188,7 @@ class UNET_lit(pl.LightningModule):
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         # return self.loss_bce(y_pred*mask, y_true.float())
-        return self.loss_bce(y_pred * mask, y_true.float()) + 0.2 * self.loss_tversky(y_pred * mask, y_true.float())
+        return self.loss_bce(y_pred , y_true.float())
 
     def _init_new_loss(self):
         loss = monai.losses.DiceFocalLoss(
@@ -223,13 +223,15 @@ class UNET_lit(pl.LightningModule):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
-        images = batch["volume_npy"].as_tensor().to(DEVICE)
-        labels = batch["label_npy"].long().to(DEVICE)
-        masks = batch["mask_npy"].to(DEVICE)
+        #images = batch["volume_npy"].as_tensor().to(DEVICE)
+        #labels = batch["label_npy"].long().to(DEVICE)
+        #masks = batch["mask_npy"].to(DEVICE)
+        images, labels = batch
+
         outputs = self.model(images)
 
         # if not using masked multiple outputs by masks
-        loss = self.loss_old(outputs, labels, masks)
+        loss = self.loss_old(outputs, labels)
         # loss = self.loss(outputs, labels, masks)
         # loss = self.combined_loss(outputs, labels, masks)
 
@@ -247,29 +249,30 @@ class UNET_lit(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images = batch["volume_npy"].as_tensor().to(DEVICE)
-        labels = batch["label_npy"].long().to(DEVICE)
-        masks = batch["mask_npy"].to(DEVICE)
+        #images = batch["volume_npy"].as_tensor().to(DEVICE)
+        #labels = batch["label_npy"].long().to(DEVICE)
+        #masks = batch["mask_npy"].to(DEVICE)
+        images, labels = batch
         outputs = self.model(images)
 
         # loss = self.loss(outputs, labels, masks)
         # loss_2 = self.loss_dice(outputs, labels, masks)
 
         # loss = self.loss(outputs, labels.float(), masks)
-        loss = self.loss_old(outputs, labels, masks)
+        loss = self.loss_old(outputs, labels,)
         # loss = self.combined_loss(outputs, labels, masks)
 
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
 
-        bce = self.loss_bce(outputs * masks, labels.float())
-        dice = self.loss_dice(outputs * masks, labels.float())
-        focal = self.loss_focal(outputs * masks, labels.float())
-        tversky = self.loss_tversky(outputs * masks, labels.float())
-        monai_focal = self.masked_focal(outputs, labels, masks)
-        monai_tversky = self.monai_masked_tversky(outputs, labels, masks)
-        my_focal = self.mine_focal(outputs * masks, labels.float())
+        bce = self.loss_bce(outputs , labels.float())
+        dice = self.loss_dice(outputs, labels.float())
+        focal = self.loss_focal(outputs , labels.float())
+        tversky = self.loss_tversky(outputs , labels.float())
+        monai_focal = self.masked_focal(outputs, labels)
+        monai_tversky = self.monai_masked_tversky(outputs, labels)
+        my_focal = self.mine_focal(outputs , labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs * masks, labels.long(), mode='binary', threshold=THRESHOLD)
+        tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=THRESHOLD)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
@@ -285,13 +288,13 @@ class UNET_lit(pl.LightningModule):
         fbeta_score_83 = FBetaScore(task="binary", beta=.5, threshold=.83, ).to(DEVICE)
         fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, ).to(DEVICE)
         fbeta_score_95 = FBetaScore(task="binary", beta=.5, threshold=.95, ).to(DEVICE)
-        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs * masks), labels)
-        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs * masks), labels)
-        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs * masks), labels)
-        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs * masks), labels)
-        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs * masks), labels)
-        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs * masks), labels)
-        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs * masks), labels)
+        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs ), labels)
+        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs ), labels)
+        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs ), labels)
+        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs ), labels)
+        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs ), labels)
+        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs ), labels)
+        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs ), labels)
 
         self.log("val_loss", loss.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("tverky", tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
@@ -343,8 +346,9 @@ class UNET_lit(pl.LightningModule):
         return loss
 
     def predict_step(self, batch, batch_idx):
-        images = batch["volume_npy"].as_tensor()
-        masks = batch["mask_npy"]
+        #images = batch["volume_npy"].as_tensor()
+        #masks = batch["mask_npy"]
+        images = batch
         h, w = images.shape[2], images.shape[3]
         h_mod = h % 512
         w_mod = w % 512
