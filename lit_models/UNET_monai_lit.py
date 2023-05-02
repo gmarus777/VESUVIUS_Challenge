@@ -316,7 +316,7 @@ class UNET_lit(pl.LightningModule):
         fbeta_95 = fbeta_score_95(torch.sigmoid(outputs*masks), labels)
 
 
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("tverky", tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
@@ -346,7 +346,7 @@ class UNET_lit(pl.LightningModule):
 
         self.metrics["val_metrics"](outputs, labels)
         if self.use_wandb:
-            wandb.log({"val/loss": loss.as_tensor()})
+            wandb.log({"val_loss": loss.as_tensor()})
             wandb.log({"accuracy": accuracy.item()})
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
