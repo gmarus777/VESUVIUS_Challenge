@@ -149,7 +149,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
 
                 monai.transforms.RandAxisFlipd(
                     keys=self.keys,
-                    prob=0.4,
+                    prob=0.5,
 
                 ),
 
@@ -189,7 +189,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spacing =(20,20),
                     magnitude_range = (1,2),
                     spatial_size=None,
-                    prob=0.4,
+                    prob=0.5,
                     rotate_range=(0,2),
                     shear_range=(2,2),
                     translate_range=None,
@@ -203,7 +203,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     sigma_range = (-.3,.3),
                     magnitude_range = (-.1,.1),
                     spatial_size=None,
-                    prob=0.05,
+                    prob=0.4,
                     rotate_range=(-1,1),
                     shear_range=(2,2),
                     translate_range=None,
@@ -219,13 +219,13 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandScaleIntensityd(
                     keys="volume_npy",
                     factors=.2,
-                    prob=0.4,
+                    prob=0.5,
 
                 ),
 
                 monai.transforms.RandAdjustContrastd(
                     keys="volume_npy",
-                    prob=0.4,
+                    prob=0.5,
 
                 ),
 
@@ -241,9 +241,9 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                 monai.transforms.RandCoarseDropoutd(
                     keys=("volume_npy", "mask_npy", "label_npy"),  #keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
                     holes= 1,
-                    spatial_size = (8,8),
-                    max_holes =3,
-                    max_spatial_size=(64, 64),
+                    spatial_size = (4,4),
+                    max_holes =2,
+                    max_spatial_size=(32, 32),
                     fill_value=0.0,
                     prob=0.4,
                 ),
@@ -252,9 +252,9 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     keys=("volume_npy", "mask_npy", "label_npy"),
                     # keys=("volume_npy", "mask_npy", "label_npy"), #keys="volume_npy",
                     holes=1,
-                    spatial_size=(32, 32),
-                    max_holes=2,
-                    max_spatial_size=(96, 96),
+                    spatial_size=(16, 16),
+                    max_holes=1,
+                    max_spatial_size=(64, 64),
                     fill_value=0.0,
                     prob=0.4,
                 ),
