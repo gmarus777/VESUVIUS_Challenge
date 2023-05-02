@@ -227,7 +227,7 @@ class UNET_TILE_lit(pl.LightningModule):
         #labels = batch["label_npy"].long().to(DEVICE)
         #masks = batch["mask_npy"].to(DEVICE)
         images, labels = batch
-
+        labels = labels.long()
         outputs = self.model(images)
 
         # if not using masked multiple outputs by masks
@@ -235,7 +235,7 @@ class UNET_TILE_lit(pl.LightningModule):
         # loss = self.loss(outputs, labels, masks)
         # loss = self.combined_loss(outputs, labels, masks)
 
-        self.log("train/loss", loss.as_tensor(), on_step=True, on_epoch=True, prog_bar=True)
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         # self.log("loss Dice", loss_2.as_tensor(), on_step=False, on_epoch=True, prog_bar=True)
 
         self.metrics["train_metrics"](outputs, labels)
@@ -253,13 +253,14 @@ class UNET_TILE_lit(pl.LightningModule):
         #labels = batch["label_npy"].long().to(DEVICE)
         #masks = batch["mask_npy"].to(DEVICE)
         images, labels = batch
+        labels = labels.long()
         outputs = self.model(images)
 
         # loss = self.loss(outputs, labels, masks)
         # loss_2 = self.loss_dice(outputs, labels, masks)
 
         # loss = self.loss(outputs, labels.float(), masks)
-        loss = self.loss_old(outputs, labels,)
+        loss = self.loss_old(outputs, labels.long())
         # loss = self.combined_loss(outputs, labels, masks)
 
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
