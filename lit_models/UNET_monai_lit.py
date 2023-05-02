@@ -160,10 +160,10 @@ class UNET_lit(pl.LightningModule):
                                                           sigmoid=True,
                                                           softmax=False,
                                                           other_act=None,
-                                                          alpha=0.8,
-                                                          beta=0.2,
+                                                          alpha=0.5,
+                                                          beta=0.5,
                                                           #reduction=LossReduction.MEAN,
-                                                          smooth_nr=1e-05,
+                                                          smooth_nr=0,
                                                           smooth_dr=1e-05,
                                                           batch=True
                                                           )
