@@ -136,7 +136,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(4))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))
         self.loss_focal = smp.losses.FocalLoss(
             mode='binary',
             # alpha=.1,
