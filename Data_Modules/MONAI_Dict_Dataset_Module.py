@@ -189,7 +189,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     spacing =(20,20),
                     magnitude_range = (1,2),
                     spatial_size=None,
-                    prob=.01,
+                    prob=0.4,
                     rotate_range=(0,2),
                     shear_range=(2,2),
                     translate_range=None,
