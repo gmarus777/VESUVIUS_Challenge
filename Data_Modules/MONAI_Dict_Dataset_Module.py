@@ -147,6 +147,13 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     w_key="mask_npy",
                 ),
 
+                monai.transforms.NormalizeIntensityd(
+                    keys="volume_npy",
+                    nonzero=True,
+                    channel_wise=True,
+                ),
+
+
                 monai.transforms.RandAxisFlipd(
                     keys=self.keys,
                     prob=0.5,
@@ -268,11 +275,7 @@ class MONAI_CSV_Scrolls_Dataset(pl.LightningDataModule):
                     #size_mode='all'
                 #),
 
-                monai.transforms.NormalizeIntensityd(
-                    keys="volume_npy",
-                    nonzero=True,
-                    channel_wise=True,
-                ),
+
 
                 monai.transforms.ToTensord(keys=self.keys),
             ]
