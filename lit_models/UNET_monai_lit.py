@@ -222,12 +222,17 @@ class UNET_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return  smp.Unet(
-            encoder_name= 'se_resnext50_32x4d', #'efficientnet-b0',#'se_resnext50_32x4d',
-            encoder_weights='imagenet',
-            in_channels=self.z_dim,
-            classes=1,
-            activation=None,
+        return  monai.networks.nets.UNet(
+            spatial_dims=2,
+            in_channels= self.z_dim,
+            out_channels=1,
+            channels=(  32, 64, 128, 256, 512,1024 ),
+            strides=(2, 2, 2, 2, 2),
+            num_res_units=3,
+            dropout=0,
+            norm = 'batch',
+            bias =False,
+
         )
 
 
