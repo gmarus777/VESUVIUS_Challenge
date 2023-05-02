@@ -140,7 +140,7 @@ class UNET_lit(pl.LightningModule):
                                             beta=0.2,
                                             gamma=1.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(8))
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
                                   #alpha=.1,
@@ -226,9 +226,9 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(  32, 64, 128, 256, 512,1024 ),
-            strides=(2, 2, 2, 2, 2),
-            num_res_units=3,
+            channels=(  32, 64, 128, 256, 512,),
+            strides=(2, 2, 2, 2,),
+            num_res_units=2,
             dropout=0,
             norm = 'batch',
             bias =False,
