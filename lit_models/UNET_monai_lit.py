@@ -28,7 +28,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 
-THRESHOLD = .4
+THRESHOLD = .5
 
 '''
  monai.networks.nets.UNet(
@@ -118,6 +118,12 @@ class UNET_lit(pl.LightningModule):
         # MY LOSS FUNCITONS
 
         self.mine_focal = FocalLoss(2)
+
+
+        # Image one has ratio 8
+        # Image two has ratio 7
+        # Image 3 has ratio 12
+        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight = torch.tensor(8))
 
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
