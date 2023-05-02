@@ -74,7 +74,7 @@ smp.Unet(
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class UNET_lit(pl.LightningModule):
+class UNET_TILE_lit(pl.LightningModule):
     def __init__(
             self,
             use_wandb=True,
