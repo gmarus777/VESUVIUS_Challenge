@@ -51,7 +51,7 @@ monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
                               out_channels =1 ,
                               backbone = 'efficientnet-b0',
                               pretrained=True,
-                              decoder_channels=(1024,512, 256, 128, 64, 32,),
+                              decoder_channels=(512, 256, 128, 64, 32,),
                               spatial_dims=2,
                               norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
                               act=('relu', {'inplace': True}),
@@ -123,7 +123,7 @@ class UNET_lit(pl.LightningModule):
         # Image one has ratio 8
         # Image two has ratio 7
         # Image 3 has ratio 12
-        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight = torch.tensor(2.5))
+        self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight = torch.tensor(4))
 
         ## SMP ##
         self.loss_dice = smp.losses.DiceLoss(mode='binary',
@@ -140,7 +140,7 @@ class UNET_lit(pl.LightningModule):
                                             beta=0.2,
                                             gamma=1.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(2.5))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight = torch.tensor(4))
         self.loss_focal = smp.losses.FocalLoss(
                                 mode = 'binary',
                                   #alpha=.1,
@@ -198,7 +198,7 @@ class UNET_lit(pl.LightningModule):
         #return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         #return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         #return self.loss_bce(y_pred*mask, y_true.float())
-        return self.loss_bce(y_pred*mask, y_true.float())
+        return self.loss_bce(y_pred*mask, y_true.float()) + 0.2*self.monai_tverskyLoss
 
 
 
@@ -226,12 +226,12 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(  32, 64, 128, 256, 512, 1024),
-            strides=(2, 2, 2, 2,2),
-            num_res_units=3,
+            channels=(  32, 64, 128, 256, 512,),
+            strides=(2, 2, 2, 2,),
+            num_res_units=2,
             dropout=0,
             norm = 'batch',
-            bias =False,
+            #bias =False,
 
         )
 
