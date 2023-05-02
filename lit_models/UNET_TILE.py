@@ -322,7 +322,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
         self.metrics["val_metrics"](outputs, labels)
         if self.use_wandb:
-            wandb.log({"val_loss": loss.as_tensor()})
+            wandb.log({"val_loss": loss})
             wandb.log({"accuracy": accuracy.item()})
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
@@ -330,10 +330,10 @@ class UNET_TILE_lit(pl.LightningModule):
            # wandb.log({"Monai Focal": monai_focal.item()})
             #wandb.log({"Monai Tversky": monai_tversky.item()})
             #wandb.log({"My Focal": my_focal.item()})
-            wandb.log({"BCE": bce.as_tensor()})
+            wandb.log({"BCE": bce})
             wandb.log({"DICE": dice.item()})
             #wandb.log({"Focal": focal.item()})
-            wandb.log({"accuracy_simple": accuracy_simple.as_tensor()})
+            wandb.log({"accuracy_simple": accuracy_simple})
 
             wandb.log({"fbeta_1": fbeta_1.as_tensor()})
             wandb.log({"fbeta_4": fbeta_4.as_tensor()})
