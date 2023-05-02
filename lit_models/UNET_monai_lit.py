@@ -198,7 +198,7 @@ class UNET_lit(pl.LightningModule):
         #return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         #return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         #return self.loss_bce(y_pred*mask, y_true.float())
-        return self.self.loss_bce(y_pred*mask, y_true.float())
+        return self.loss_bce(y_pred*mask, y_true.float())
 
 
 
@@ -226,9 +226,9 @@ class UNET_lit(pl.LightningModule):
             spatial_dims=2,
             in_channels= self.z_dim,
             out_channels=1,
-            channels=(  32, 64, 128, 256, 512,),
-            strides=(2, 2, 2, 2,),
-            num_res_units=2,
+            channels=(  32, 64, 128, 256, 512, 1024),
+            strides=(2, 2, 2, 2,2),
+            num_res_units=3,
             dropout=0,
             norm = 'batch',
             bias =False,
