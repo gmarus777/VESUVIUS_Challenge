@@ -127,7 +127,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
         # MY LOSS FUNCITONS
 
-        self.mine_focal = FocalLoss(2)
+        #self.mine_focal = FocalLoss(2)
 
         # Image one has ratio 8
         # Image two has ratio 7
