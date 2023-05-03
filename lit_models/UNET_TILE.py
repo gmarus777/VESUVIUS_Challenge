@@ -143,7 +143,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
-                                                   log_loss=False,
+                                                   log_loss=True,
                                                    from_logits=True,
                                                    alpha=0.5,
                                                    beta=0.5,
