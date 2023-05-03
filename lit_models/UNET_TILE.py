@@ -185,11 +185,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                 # focal_weight=.25,
                                                 )
 
-        self.monai_masked_tversky = monai.losses.MaskedLoss(self.monai_tverskyLoss)
 
-        self.masked_dice = monai.losses.MaskedLoss(self.diceloss)
-
-        self.masked_focal = monai.losses.MaskedLoss(self.focalloss)
 
     def criterion(self, y_pred, y_true):
         # return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
