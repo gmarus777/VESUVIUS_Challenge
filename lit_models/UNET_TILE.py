@@ -143,7 +143,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
-                                                   log_loss=True,
+                                                   log_loss=False,
                                                    from_logits=True,
                                                    alpha=0.5,
                                                    beta=0.5,
@@ -197,7 +197,7 @@ class UNET_TILE_lit(pl.LightningModule):
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         # return self.loss_bce(y_pred*mask, y_true.float())
-        return 0.8*self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_tversky(y_pred , y_true.float())
+        return 0.9*self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_tversky(y_pred , y_true.float())
 
     def _init_new_loss(self):
         loss = monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
@@ -218,18 +218,20 @@ class UNET_TILE_lit(pl.LightningModule):
         return monai.losses.MaskedLoss(loss)
 
     def _init_model(self):
-        return monai.networks.nets.UNet(
-            spatial_dims=2,
-            in_channels=self.z_dim,
-            out_channels=1,
-            channels=( 32, 64, 128, 256,512,512, 1204 ),
-            strides=(2, 2, 2, 2,2, 2),
-            num_res_units=4,
-            dropout=0,
-            norm='batch',
-            bias =False,
-
-        )
+        return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
+                              out_channels =1 ,
+                              backbone = 'efficientnet-b4',
+                              pretrained=True,
+                              decoder_channels=( 1024, 1024, 512, 512, 256, 128, 64, ),
+                              spatial_dims=2,
+                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
+                              #act=('relu', {'inplace': True}),
+                              act = None,
+                              dropout=0.0,
+                              decoder_bias=False,
+                              upsample='deconv',
+                              interp_mode='nearest',
+                              is_pad=False)
 
     def forward(self, x):
         return self.model(x)
