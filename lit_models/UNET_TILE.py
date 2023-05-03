@@ -121,7 +121,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
         self.loss_old = self.criterion  # MixedLoss(10.0, 2.0) #self.criterion
 
-        self.loss = self._init_new_loss()
+        #self.loss = self._init_new_loss()
 
         ## LOSSES######
 
