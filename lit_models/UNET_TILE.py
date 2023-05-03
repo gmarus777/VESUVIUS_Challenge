@@ -80,7 +80,41 @@ smp.Unet(
             activation=None,
         )                              
 
+### MONAI ###
+        self.diceloss = monai.losses.DiceLoss(include_background=True,
+                                              sigmoid=True,
+                                              squared_pred=False,
+                                              jaccard=False,
+                                              batch=True
+                                              )
 
+        self.monai_tverskyLoss = monai.losses.TverskyLoss(include_background=True,
+                                                          sigmoid=True,
+                                                          softmax=False,
+                                                          other_act=None,
+                                                          alpha=0.5,
+                                                          beta=0.5,
+                                                          # reduction=LossReduction.MEAN,
+                                                          smooth_nr=0,
+                                                          smooth_dr=1e-06,
+                                                          batch=True
+                                                          )
+
+        self.focalloss = monai.losses.FocalLoss(include_background=True,
+                                                gamma=2.0,
+                                                # weight=.25,
+                                                # focal_weight=.25,
+                                                )
+
+
+ self.loss_focal = smp.losses.FocalLoss(
+            mode='binary',
+            # alpha=.1,
+            gamma=2.0,
+            ignore_index=None,
+
+            normalized=False,
+            reduced_threshold=None)
 
 '''
 
@@ -150,40 +184,8 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    gamma=2.0)
 
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(4))
-        self.loss_focal = smp.losses.FocalLoss(
-            mode='binary',
-            # alpha=.1,
-            gamma=2.0,
-            ignore_index=None,
 
-            normalized=False,
-            reduced_threshold=None)
 
-        ### MONAI ###
-        self.diceloss = monai.losses.DiceLoss(include_background=True,
-                                              sigmoid=True,
-                                              squared_pred=False,
-                                              jaccard=False,
-                                              batch=True
-                                              )
-
-        self.monai_tverskyLoss = monai.losses.TverskyLoss(include_background=True,
-                                                          sigmoid=True,
-                                                          softmax=False,
-                                                          other_act=None,
-                                                          alpha=0.5,
-                                                          beta=0.5,
-                                                          # reduction=LossReduction.MEAN,
-                                                          smooth_nr=0,
-                                                          smooth_dr=1e-06,
-                                                          batch=True
-                                                          )
-
-        self.focalloss = monai.losses.FocalLoss(include_background=True,
-                                                gamma=2.0,
-                                                # weight=.25,
-                                                # focal_weight=.25,
-                                                )
 
 
 
@@ -199,30 +201,14 @@ class UNET_TILE_lit(pl.LightningModule):
         # return self.loss_bce(y_pred*mask, y_true.float())
         return self.loss_bce(y_pred , y_true.float()) + 0.2*self.loss_tversky(y_pred , y_true.float())
 
-    def _init_new_loss(self):
-        loss = monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
-                              out_channels =1 ,
-                              backbone = 'efficientnet-b4',
-                              pretrained=True,
-                              decoder_channels=( 1024, 512, 512, 256, 128, 64, 32,),
-                              spatial_dims=2,
-                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
-                              #act=('relu', {'inplace': True}),
-                              act = None,
-                              dropout=0.0,
-                              decoder_bias=False,
-                              upsample='deconv',
-                              interp_mode='nearest',
-                              is_pad=False)
 
-        return monai.losses.MaskedLoss(loss)
 
     def _init_model(self):
         return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
                               out_channels =1 ,
-                              backbone = 'efficientnet-b4',
+                              backbone = 'efficientnet-b3',
                               pretrained=True,
-                              decoder_channels=( 1024, 1024, 512, 512, 256, 128, 64, ),
+                              decoder_channels=( 1024, 768, 512, 256, 128, 64, ),
                               spatial_dims=2,
                               norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
                               #act=('relu', {'inplace': True}),
