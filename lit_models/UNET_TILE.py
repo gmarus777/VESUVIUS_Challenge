@@ -29,6 +29,19 @@ ssl._create_default_https_context = ssl._create_unverified_context
 THRESHOLD = .4
 
 '''
+monai.networks.nets.UNet(
+            spatial_dims=2,
+            in_channels=self.z_dim,
+            out_channels=1,
+            channels=( 32, 64, 128, 256,512,512, 1204 ),
+            strides=(2, 2, 2, 2,2, 2),
+            num_res_units=4,
+            dropout=0,
+            norm='batch',
+            bias =False,
+
+        )
+
  monai.networks.nets.UNet(
             spatial_dims=2,
             in_channels= self.z_dim,
@@ -188,20 +201,23 @@ class UNET_TILE_lit(pl.LightningModule):
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         # return self.loss_bce(y_pred*mask, y_true.float())
-        return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_tversky(y_pred , y_true.float())
+        return 0.8*self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_tversky(y_pred , y_true.float())
 
     def _init_new_loss(self):
-        loss = monai.losses.DiceFocalLoss(
-            include_background=True,
-            sigmoid=True,
-            batch=True,
-            focal_weight=.1,
-            lambda_dice=1.0,
-            lambda_focal=1.0,
-            # other_act=torch.nn.ReLU(),
-            smooth_nr=.01,  # 1e-05,
-            smooth_dr=.01,
-        )
+        loss = monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
+                              out_channels =1 ,
+                              backbone = 'efficientnet-b4',
+                              pretrained=True,
+                              decoder_channels=( 1024, 512, 512, 256, 128, 64, 32,),
+                              spatial_dims=2,
+                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
+                              #act=('relu', {'inplace': True}),
+                              act = None,
+                              dropout=0.0,
+                              decoder_bias=False,
+                              upsample='deconv',
+                              interp_mode='nearest',
+                              is_pad=False)
 
         return monai.losses.MaskedLoss(loss)
 
