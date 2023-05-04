@@ -281,7 +281,7 @@ class Image_Transforms:
         [
             # A.RandomResizedCrop(
             #     size, size, scale=(0.85, 1.0)),
-            A.Resize(PATCH_SIZE, PATCH_SIZE),
+            #A.Resize(PATCH_SIZE, PATCH_SIZE),
             A.augmentations.geometric.resize.RandomScale(scale_limit=0.1,
                                                          interpolation=1,
                                                          always_apply=False,
@@ -327,6 +327,8 @@ class Image_Transforms:
                             mask_fill_value=0, p=0.5),
             # A.Cutout(max_h_size=int(size * 0.6),
             #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
+
+            A.Resize(PATCH_SIZE, PATCH_SIZE),
             A.Normalize(
                 mean=[0] * Z_DIM,
                 std=[1] * Z_DIM,
