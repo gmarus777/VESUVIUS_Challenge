@@ -241,9 +241,9 @@ class UNET_TILE_lit(pl.LightningModule):
             in_channels=self.z_dim,
             classes=1,
             activation=None,
-            encoder_depth=6,
+            encoder_depth=5,
             decoder_use_batchnorm=True,
-            decoder_channels=( 1024, 512, 256, 128, 64, 32,   ),
+            decoder_channels=( 512, 256, 256, 128, 64,  ),
 
 
         )
