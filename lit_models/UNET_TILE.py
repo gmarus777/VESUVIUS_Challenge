@@ -201,7 +201,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(3))
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))
 
 
 
@@ -223,7 +223,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
     def _init_model(self):
         return smp.Unet(
-            encoder_name='efficientnet-b3' ,#'se_resnext50_32x4d',
+            encoder_name='efficientnet-b2' ,#'se_resnext50_32x4d',
             encoder_weights='imagenet',
             in_channels=self.z_dim,
             classes=1,
@@ -284,11 +284,11 @@ class UNET_TILE_lit(pl.LightningModule):
         #monai_tversky = self.monai_masked_tversky(outputs, labels)
         #my_focal = self.mine_focal(outputs , labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=THRESHOLD)
+        tp, fp, fn, tn = smp.metrics.get_stats(torch.sigmoid(outputs ), labels.long(), mode='binary', threshold=THRESHOLD)
         tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
-        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
+        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.4, reduction='micro')
         precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro")
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)

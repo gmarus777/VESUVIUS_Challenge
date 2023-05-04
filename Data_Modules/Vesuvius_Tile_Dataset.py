@@ -16,7 +16,7 @@ from tqdm.auto import tqdm
 
 
 PATCH_SIZE =224
-Z_DIM = 12
+Z_DIM = 10
 
 
 PATH = Path().resolve().parents[0]
@@ -241,7 +241,51 @@ class Vesuvius_Tile_Datset(Dataset):
 
 
 
+'''
+Additional 
 
+A..augmentations.geometric.transforms.Perspective(scale=(0.05, 0.1),
+                                                    keep_size=True,
+                                                     pad_mode=0, 
+                                                     pad_val=0, 
+                                                     mask_pad_val=0, 
+                                                     fit_output=False, 
+                                                     interpolation=1, 
+                                                     always_apply=False, 
+                                                     p=0.5)
+
+
+A.augmentations.geometric.resize.RandomScale(scale_limit=0.1, 
+                                                interpolation=1, 
+                                                always_apply=False, 
+                                                p=0.5)
+                                                
+                                                
+                                                
+A..augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.05, 
+                                                        shift_limit=0.05, 
+                                                        interpolation=1, 
+                                                        border_mode=4, 
+                                                        value=None, 
+                                                        mask_value=None, 
+                                                        always_apply=False, 
+                                                        p=0.5)    
+                                                        
+                                                        
+                                                        
+                                                        
+A.augmentations.geometric.transforms.ElasticTransform(alpha=1, 
+                                                        sigma=50, 
+                                                        alpha_affine=50, 
+                                                        interpolation=1, 
+                                                        border_mode=4, 
+                                                        value=None, 
+                                                        mask_value=None, 
+                                                        always_apply=False, 
+                                                        approximate=False, 
+                                                        same_dxdy=False, 
+                                                        p=0.5)                                           
+'''
 
 
 
@@ -256,7 +300,8 @@ class Image_Transforms:
             A.VerticalFlip(p=0.5),
             A.RandomBrightnessContrast(p=0.75),
             A.ShiftScaleRotate(p=0.75),
-            A.OneOf([
+
+    A.OneOf([
                 A.GaussNoise(var_limit=[10, 50]),
                 A.GaussianBlur(),
                 A.MotionBlur(),
