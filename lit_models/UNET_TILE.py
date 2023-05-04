@@ -228,6 +228,11 @@ class UNET_TILE_lit(pl.LightningModule):
             in_channels=self.z_dim,
             classes=1,
             activation=None,
+            encoder_depth=5,
+            decoder_use_batchnorm=True,
+            decoder_channels=(1024, 512,256, 128, 64, ),
+
+
         )
 
     def forward(self, x):
