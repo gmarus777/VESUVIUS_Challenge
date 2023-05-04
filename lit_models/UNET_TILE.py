@@ -289,7 +289,7 @@ class UNET_TILE_lit(pl.LightningModule):
         #monai_tversky = self.monai_masked_tversky(outputs, labels)
         #my_focal = self.mine_focal(outputs , labels.float())
 
-        tp, fp, fn, tn = smp.metrics.get_stats(outputs, labels.long(), mode='binary', threshold=THRESHOLD)
+        tp, fp, fn, tn = smp.metrics.get_stats(torch.sigmoid(outputs ), labels.long(), mode='binary', threshold=THRESHOLD)
         tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
