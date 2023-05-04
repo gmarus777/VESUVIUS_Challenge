@@ -16,7 +16,7 @@ from tqdm.auto import tqdm
 
 
 PATCH_SIZE =224
-Z_DIM = 10
+Z_DIM = 8
 
 
 PATH = Path().resolve().parents[0]
@@ -262,7 +262,7 @@ A.augmentations.geometric.resize.RandomScale(scale_limit=0.1,
                                                 
                                                 
                                                 
-A..augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.05, 
+A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.05, 
                                                         shift_limit=0.05, 
                                                         interpolation=1, 
                                                         border_mode=4, 
@@ -296,18 +296,48 @@ class Image_Transforms:
             # A.RandomResizedCrop(
             #     size, size, scale=(0.85, 1.0)),
             A.Resize(PATCH_SIZE, PATCH_SIZE),
+            A.augmentations.geometric.resize.RandomScale(scale_limit=0.1,
+                                                         interpolation=1,
+                                                         always_apply=False,
+                                                         p=0.3),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.RandomBrightnessContrast(p=0.75),
+            A.RandomBrightnessContrast(.25, (-.3, .3), p=0.75),
             A.ShiftScaleRotate(p=0.75),
+            A.GaussianBlur(blur_limit=(3, 7), p=0.3),
+            A.GaussNoise(var_limit=[10, 50], p=0.3),
 
     A.OneOf([
-                A.GaussNoise(var_limit=[10, 50]),
-                A.GaussianBlur(),
-                A.MotionBlur(),
-            ], p=0.4),
+                A.GaussNoise(var_limit=[10, 60]),
+                A.GaussianBlur(blur_limit=(1, 9)),
+                A.MotionBlur(blur_limit=9),
+            ], p=0.3),
+
+            A.augmentations.geometric.transforms.ElasticTransform(alpha=120,
+                                                                  sigma=120*0.05,
+                                                                  alpha_affine=120 * 0.03,
+                                                                  interpolation=1,
+                                                                  border_mode=cv2.BORDER_CONSTANT,
+                                                                  value=0,
+                                                                  mask_value=0,
+                                                                  always_apply=False,
+                                                                  approximate=False,
+                                                                  same_dxdy=False,
+                                                                  p=0.4),
+
+            A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.1,
+                                                                   shift_limit=0.02,
+                                                                   interpolation=1,
+                                                                   border_mode=cv2.BORDER_CONSTANT,
+                                                                   value=0,
+                                                                   mask_value=0,
+                                                                   always_apply=False,
+                                                                   p=0.2),
+
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
-            A.CoarseDropout(max_holes=1, max_width=int(PATCH_SIZE * 0.3), max_height=int(PATCH_SIZE * 0.3),
+            A.CoarseDropout(max_holes=1, max_width=64, max_height=64,
+                            mask_fill_value=0, p=0.5),
+            A.CoarseDropout(max_holes=1, max_width=38, max_height=32,
                             mask_fill_value=0, p=0.5),
             # A.Cutout(max_h_size=int(size * 0.6),
             #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
