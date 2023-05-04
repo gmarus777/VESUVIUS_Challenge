@@ -230,7 +230,7 @@ class UNET_TILE_lit(pl.LightningModule):
             activation=None,
             encoder_depth=5,
             decoder_use_batchnorm=True,
-            decoder_channels=( 512, 512, 256, 128, 64,  ),
+            decoder_channels=( 512, 256, 256, 128, 64,  ),
 
 
         )
