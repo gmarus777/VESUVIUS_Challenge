@@ -16,7 +16,7 @@ from tqdm.auto import tqdm
 
 
 PATCH_SIZE =224
-Z_DIM = 32
+Z_DIM = 12
 
 
 PATH = Path().resolve().parents[0]
