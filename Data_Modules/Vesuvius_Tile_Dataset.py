@@ -1,7 +1,5 @@
 import segmentation_models_pytorch as smp
 
-
-
 from pathlib import Path
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
@@ -14,20 +12,18 @@ from albumentations import ImageOnlyTransform
 import pytorch_lightning as pl
 from tqdm.auto import tqdm
 
-
-PATCH_SIZE =224
+PATCH_SIZE = 224
 Z_DIM = 32
 
-
 PATH = Path().resolve().parents[0]
-#DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 KAGGLE_DIR = PATH / "kaggle"
 
 INPUT_DIR = KAGGLE_DIR / "input"
 
 COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
-COMPETITION_DATA_DIR_str =  "kaggle/input/vesuvius-challenge-ink-detection/"
+COMPETITION_DATA_DIR_str = "kaggle/input/vesuvius-challenge-ink-detection/"
 
 TRAIN_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_train_1.csv"
 TEST_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_test_1.csv"
@@ -44,11 +40,13 @@ class CFG:
     num_workers = 8
     on_gpu = True
     test_fragment_id = ['a','b']
-    
-    
+
+
 
 
 '''
+
+
 class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
     def __init__(self,
                  cfg,
@@ -58,7 +56,7 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         self.save_hyperparameters()
         self.cfg = cfg
         self.train_transform = Image_Transforms.train_transforms
-        self.val_transform  = Image_Transforms.val_transforms
+        self.val_transform = Image_Transforms.val_transforms
         self.train_data, self.train_labels = self.get_train_dataset()
         self.val_data, self.val_labels, self.val_pos = self.get_val_dataset()
 
@@ -67,9 +65,8 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
                                                   transform=self.train_transform)
 
         self.val_dataset = Vesuvius_Tile_Datset(images=self.val_data,
-                                                labels= self.val_labels,
-                                                transform = self.val_transform)
-
+                                                labels=self.val_labels,
+                                                transform=self.val_transform)
 
     def get_train_dataset(self):
         train_images = []
@@ -120,7 +117,7 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         for fragment_id in self.cfg.val_fragment_id:
             test_images = self.read_image_test(fragment_id)
 
-    def read_image_test(self,fragment_id):
+    def read_image_test(self, fragment_id):
         images = []
 
         # idxs = range(65)
@@ -141,7 +138,6 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         images = np.stack(images, axis=2)
 
         return images
-
 
     def read_image_mask(self, fragment_id):
 
@@ -165,7 +161,7 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
         images = np.stack(images, axis=2)
 
-        mask = cv2.imread(COMPETITION_DATA_DIR_str +f"train/{fragment_id}/inklabels.png", 0)
+        mask = cv2.imread(COMPETITION_DATA_DIR_str + f"train/{fragment_id}/inklabels.png", 0)
         mask = np.pad(mask, [(0, pad0), (0, pad1)], constant_values=0)
 
         mask = mask.astype('float32')
@@ -187,9 +183,9 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
             batch_size=self.cfg.batch_size,
             num_workers=self.cfg.num_workers,
             pin_memory=self.cfg.on_gpu,
-            #multiprocessing_context="spawn"
-            #multiprocessing_context="fork",
-            #collate_fn=self.collate_function,
+            # multiprocessing_context="spawn"
+            # multiprocessing_context="fork",
+            # collate_fn=self.collate_function,
         )
 
     def val_dataloader(self, *args, **kwargs):
@@ -205,19 +201,14 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
             batch_size=self.cfg.batch_size,
             num_workers=self.cfg.num_workers,
             pin_memory=self.cfg.on_gpu,
-            #multiprocessing_context="spawn"
-            #multiprocessing_context="fork",
-            #collate_fn=self.collate_function
+            # multiprocessing_context="spawn"
+            # multiprocessing_context="fork",
+            # collate_fn=self.collate_function
         )
 
 
-
-
-
-
-
 class Vesuvius_Tile_Datset(Dataset):
-    def __init__(self, images,  labels=None, transform=None):
+    def __init__(self, images, labels=None, transform=None):
         self.images = images
         self.labels = labels
         self.transform = transform
@@ -238,31 +229,101 @@ class Vesuvius_Tile_Datset(Dataset):
         return image, label
 
 
+'''
+Additional 
+
+A..augmentations.geometric.transforms.Perspective(scale=(0.05, 0.1),
+                                                    keep_size=True,
+                                                     pad_mode=0, 
+                                                     pad_val=0, 
+                                                     mask_pad_val=0, 
+                                                     fit_output=False, 
+                                                     interpolation=1, 
+                                                     always_apply=False, 
+                                                     p=0.5)
+
+
+A.augmentations.geometric.resize.RandomScale(scale_limit=0.1, 
+                                                interpolation=1, 
+                                                always_apply=False, 
+                                                p=0.5)
+
+
+
+A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.05, 
+                                                        shift_limit=0.05, 
+                                                        interpolation=1, 
+                                                        border_mode=4, 
+                                                        value=None, 
+                                                        mask_value=None, 
+                                                        always_apply=False, 
+                                                        p=0.5)    
 
 
 
 
-
+A.augmentations.geometric.transforms.ElasticTransform(alpha=1, 
+                                                        sigma=50, 
+                                                        alpha_affine=50, 
+                                                        interpolation=1, 
+                                                        border_mode=4, 
+                                                        value=None, 
+                                                        mask_value=None, 
+                                                        always_apply=False, 
+                                                        approximate=False, 
+                                                        same_dxdy=False, 
+                                                        p=0.5)                                           
+'''
 
 
 class Image_Transforms:
-
     train_transforms = A.Compose(
         [
             # A.RandomResizedCrop(
             #     size, size, scale=(0.85, 1.0)),
             A.Resize(PATCH_SIZE, PATCH_SIZE),
+            A.augmentations.geometric.resize.RandomScale(scale_limit=0.1,
+                                                         interpolation=1,
+                                                         always_apply=False,
+                                                         p=0.3),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.RandomBrightnessContrast(p=0.75),
+            A.RandomBrightnessContrast(.25, (-.3, .3), p=0.75),
             A.ShiftScaleRotate(p=0.75),
+            A.GaussianBlur(blur_limit=(3, 7), p=0.3),
+            A.GaussNoise(var_limit=[10, 50], p=0.3),
+
             A.OneOf([
-                A.GaussNoise(var_limit=[10, 50]),
-                A.GaussianBlur(),
-                A.MotionBlur(),
-            ], p=0.4),
+                A.GaussNoise(var_limit=[10, 60]),
+                A.GaussianBlur(blur_limit=(1, 9)),
+                A.MotionBlur(blur_limit=9),
+            ], p=0.3),
+
+            A.augmentations.geometric.transforms.ElasticTransform(alpha=120,
+                                                                  sigma=120 * 0.05,
+                                                                  alpha_affine=120 * 0.03,
+                                                                  interpolation=1,
+                                                                  border_mode=cv2.BORDER_CONSTANT,
+                                                                  value=0,
+                                                                  mask_value=0,
+                                                                  always_apply=False,
+                                                                  approximate=False,
+                                                                  same_dxdy=False,
+                                                                  p=0.4),
+
+            A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.1,
+                                                                   shift_limit=0.02,
+                                                                   interpolation=1,
+                                                                   border_mode=cv2.BORDER_CONSTANT,
+                                                                   value=0,
+                                                                   mask_value=0,
+                                                                   always_apply=False,
+                                                                   p=0.2),
+
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
-            A.CoarseDropout(max_holes=1, max_width=int(PATCH_SIZE * 0.3), max_height=int(PATCH_SIZE * 0.3),
+            A.CoarseDropout(max_holes=1, max_width=64, max_height=64,
+                            mask_fill_value=0, p=0.5),
+            A.CoarseDropout(max_holes=1, max_width=38, max_height=32,
                             mask_fill_value=0, p=0.5),
             # A.Cutout(max_h_size=int(size * 0.6),
             #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
@@ -276,12 +337,12 @@ class Image_Transforms:
 
     val_transforms = A.Compose(
         [
-        A.Resize(PATCH_SIZE, PATCH_SIZE),
-        A.Normalize(
-            mean=[0] * Z_DIM,
-            std=[1] * Z_DIM
-        ),
+            A.Resize(PATCH_SIZE, PATCH_SIZE),
+            A.Normalize(
+                mean=[0] * Z_DIM,
+                std=[1] * Z_DIM
+            ),
 
-        ToTensorV2(transpose_mask=True),
-    ]
+            ToTensorV2(transpose_mask=True),
+        ]
     )
