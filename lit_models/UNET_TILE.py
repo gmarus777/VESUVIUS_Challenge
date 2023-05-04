@@ -30,6 +30,19 @@ THRESHOLD = .4
 
 '''
 GCP:
+
+.UnetPlusPlus(encoder_name='resnet34',
+                            encoder_depth=5,
+                             encoder_weights='imagenet',
+                              decoder_use_batchnorm=True,
+                               decoder_channels=(256, 128, 64, 32, 16),
+                                decoder_attention_type=scse,
+                                 in_channels=3,
+                                  classes=1,
+                                   activation=None,
+                                    aux_params=None)
+
+
 monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
                               out_channels =1 ,
                               backbone = 'efficientnet-b3',
@@ -228,9 +241,9 @@ class UNET_TILE_lit(pl.LightningModule):
             in_channels=self.z_dim,
             classes=1,
             activation=None,
-            encoder_depth=5,
+            encoder_depth=6,
             decoder_use_batchnorm=True,
-            decoder_channels=( 512, 256, 256, 128, 64,  ),
+            decoder_channels=( 1024, 512, 256, 128, 64, 32,   ),
 
 
         )
