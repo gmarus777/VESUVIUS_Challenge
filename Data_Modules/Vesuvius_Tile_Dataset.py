@@ -304,8 +304,8 @@ class Image_Transforms:
             A.VerticalFlip(p=0.5),
             A.RandomBrightnessContrast(.25, (-.3, .3), p=0.75),
             A.ShiftScaleRotate(p=0.75),
-            A.GaussianBlur(blur_limit=(3, 7), p=0.3),
-            A.GaussNoise(var_limit=[10, 50], p=0.3),
+            A.GaussianBlur(blur_limit=(3, 7), p=0.4),
+            A.GaussNoise(var_limit=[10, 50], p=0.4),
 
     A.OneOf([
                 A.GaussNoise(var_limit=[10, 60]),
@@ -332,7 +332,7 @@ class Image_Transforms:
                                                                    value=0,
                                                                    mask_value=0,
                                                                    always_apply=False,
-                                                                   p=0.2),
+                                                                   p=0.3),
 
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
             A.CoarseDropout(max_holes=1, max_width=64, max_height=64,
