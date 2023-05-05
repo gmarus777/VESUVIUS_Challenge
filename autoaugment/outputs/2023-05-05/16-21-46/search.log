@@ -1,0 +1,8 @@
+[2023-05-05 16:21:49,313][pytorch_lightning.utilities.seed][INFO] - Global seed set to 42
+[2023-05-05 16:21:49,719][autoalbument.faster_autoaugment.datamodule][INFO] - Preprocessing transform:
+Compose([
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=True),
+], p=1.0, bbox_params=None, keypoint_params=None, additional_targets={})
+[2023-05-05 16:21:49,854][pytorch_lightning.utilities.distributed][INFO] - GPU available: False, used: False
+[2023-05-05 16:21:49,854][pytorch_lightning.utilities.distributed][INFO] - TPU available: None, using: 0 TPU cores

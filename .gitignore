@@ -5,3 +5,4 @@ logs
 wandb
 papers
 .ipynb_checkpoints
+.autoaugment
