@@ -225,7 +225,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss() #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(8)) #pos_weight=torch.tensor(1)
 
 
 
@@ -250,7 +250,7 @@ class UNET_TILE_lit(pl.LightningModule):
                               out_channels =1 ,
                               backbone = 'efficientnet-b3',
                               pretrained=True,
-                              decoder_channels=(  768, 512, 256, 128, 64, 32 ),
+                              decoder_channels=( 1024, 768, 512, 256, 128, 64, 32 ),
                               spatial_dims=2,
                               norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
                               #act=('relu', {'inplace': True}),
