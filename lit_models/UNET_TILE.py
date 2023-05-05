@@ -248,9 +248,9 @@ class UNET_TILE_lit(pl.LightningModule):
     def _init_model(self):
         return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
                               out_channels =1 ,
-                              backbone = 'efficientnet-b3',
+                              backbone = 'efficientnet-b2',
                               pretrained=True,
-                              decoder_channels=( 1024, 768, 512, 256, 128, 64, 32 ),
+                              decoder_channels=( 512, 256, 256, 128, 64, 32 ),
                               spatial_dims=2,
                               norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
                               #act=('relu', {'inplace': True}),
