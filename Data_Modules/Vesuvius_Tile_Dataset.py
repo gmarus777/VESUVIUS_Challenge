@@ -55,7 +55,7 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
                  ):
 
         super().__init__()
-        self.save_hyperparameters()
+        #self.save_hyperparameters()
         self.cfg = cfg
         self.train_transform = Image_Transforms.train_transforms
         self.val_transform  = Image_Transforms.val_transforms
