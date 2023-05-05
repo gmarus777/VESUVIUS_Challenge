@@ -225,7 +225,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss() #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(3)) #pos_weight=torch.tensor(1)
 
 
 
@@ -246,20 +246,18 @@ class UNET_TILE_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
-                              out_channels =1 ,
-                              backbone = 'efficientnet-b2',
-                              pretrained=True,
-                              decoder_channels=( 512, 256, 256, 128, 64, 32 ),
-                              spatial_dims=2,
-                              norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
-                              #act=('relu', {'inplace': True}),
-                              act = None,
-                              dropout=0.0,
-                              decoder_bias=False,
-                              upsample='deconv',
-                              interp_mode='nearest',
-                              is_pad=False)
+        return  monai.networks.nets.UNet(
+            spatial_dims=2,
+            in_channels=self.z_dim,
+            out_channels=1,
+            channels=( 32, 64, 128,256,512, 1024, 1280),
+            strides=(2, 2, 2, 2,2, 2),
+            num_res_units=5,
+            dropout=0,
+            norm='batch',
+            bias =False,
+
+        )
 
     def forward(self, x):
         return self.model(x)
