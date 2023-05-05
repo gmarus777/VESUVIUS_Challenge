@@ -229,6 +229,58 @@ class Vesuvius_Tile_Datset(Dataset):
         return image, label
 
 
+
+
+
+class Image_Transforms:
+
+    train_transforms = A.Compose(
+        [
+            # A.RandomResizedCrop(
+            #     size, size, scale=(0.85, 1.0)),
+            A.Resize(PATCH_SIZE, PATCH_SIZE),
+            A.HorizontalFlip(p=0.5),
+            A.VerticalFlip(p=0.5),
+            A.RandomBrightnessContrast(p=0.75),
+            A.ShiftScaleRotate(p=0.75),
+            A.OneOf([
+                A.GaussNoise(var_limit=[10, 50]),
+                A.GaussianBlur(),
+                A.MotionBlur(),
+            ], p=0.4),
+            A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
+            A.CoarseDropout(max_holes=1, max_width=int(PATCH_SIZE * 0.3), max_height=int(PATCH_SIZE * 0.3),
+                            mask_fill_value=0, p=0.5),
+            # A.Cutout(max_h_size=int(size * 0.6),
+            #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
+            A.Normalize(
+                mean=[0] * Z_DIM,
+                std=[1] * Z_DIM,
+            ),
+            ToTensorV2(transpose_mask=True),
+        ]
+    )
+
+    val_transforms = A.Compose(
+        [
+        A.Resize(PATCH_SIZE, PATCH_SIZE),
+        A.Normalize(
+            mean=[0] * Z_DIM,
+            std=[1] * Z_DIM
+        ),
+
+        ToTensorV2(transpose_mask=True),
+    ]
+    )
+
+
+
+
+
+
+
+
+
 '''
 Additional 
 
@@ -274,6 +326,21 @@ A.augmentations.geometric.transforms.ElasticTransform(alpha=1,
                                                         same_dxdy=False, 
                                                         p=0.5)                                           
 '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+Old
 
 
 class Image_Transforms:
@@ -348,3 +415,4 @@ class Image_Transforms:
             ToTensorV2(transpose_mask=True),
         ]
     )
+    '''
