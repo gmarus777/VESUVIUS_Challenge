@@ -250,14 +250,14 @@ class UNET_TILE_lit(pl.LightningModule):
 
     def _init_model(self):
         return  smp.Unet(
-            encoder_name='se_resnext50_32x4d' ,#'se_resnext50_32x4d',
+            encoder_name='efficientnet-b3' , #'se_resnext50_32x4d',
             encoder_weights='imagenet',
             in_channels=self.z_dim,
             classes=1,
             activation=None,
             encoder_depth=5,
             decoder_use_batchnorm=True,
-            decoder_channels=(  512, 256, 128, 64, 32  ) ,
+            decoder_channels=(  256, 128, 64, 64, 32,  ) ,
         )
 
     def forward(self, x):
