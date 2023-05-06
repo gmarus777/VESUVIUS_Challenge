@@ -248,11 +248,24 @@ class UNET_TILE_lit(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5)) #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.2)) #pos_weight=torch.tensor(1)
 
-
-
-
+        self.loss_monai_focal_dice = monai.losses.DiceFocalLoss(include_background=True,
+                                                                to_onehot_y=False,
+                                                                sigmoid=True,
+                                                                softmax=False,
+                                                                other_act=None,
+                                                                squared_pred=False,
+                                                                jaccard=False,
+                                                                reduction='mean',
+                                                                smooth_nr=1e-05,
+                                                                smooth_dr=1e-05,
+                                                                batch=True,
+                                                                gamma=2.0,
+                                                                focal_weight=None,
+                                                                lambda_dice=1.0,
+                                                                lambda_focal=1.0
+                                                                )
 
     def criterion(self, y_pred, y_true):
         # return  0.5*self.loss_bce(y_pred, y_true) +  self.loss_dice(y_pred, y_true) #+ 2*self.loss_focal(y_pred, y_true)
@@ -264,25 +277,22 @@ class UNET_TILE_lit(pl.LightningModule):
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
         # return self.loss_bce(y_pred*mask, y_true.float())
-        return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_tversky(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float()) +  0.8*self.loss_monai_focal_dice(y_pred , y_true.float() )
 
 
 
     def _init_model(self):
-        return  monai.networks.nets.FlexibleUNet(in_channels = self.z_dim,
-                              out_channels =1 ,
-                              backbone = 'efficientnet-b3',
-                              pretrained=True,
-                              decoder_channels=(   512, 256, 128, 64, 32 ),
-                              spatial_dims=2,
-                              norm=('instance', {'eps': 0.001, 'momentum': 0.1}),
-                              #act=('relu', {'inplace': True}),
-                              act = None,
-                              dropout=0.0,
-                              decoder_bias=False,
-                              upsample='deconv',
-                              interp_mode='nearest',
-                              is_pad=False)
+        return  smp.Unet(
+            encoder_name='se_resnext50_32x4d' ,#'se_resnext50_32x4d',
+            encoder_weights='imagenet',
+            in_channels=self.z_dim,
+            classes=1,
+            activation=None,
+            encoder_depth=5,
+            decoder_use_batchnorm=True,
+            decoder_channels=( 512, 256, 128, 64, 32  ),
+
+        )
 
 
 
