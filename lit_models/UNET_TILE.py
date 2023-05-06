@@ -255,7 +255,7 @@ class UNET_TILE_lit(pl.LightningModule):
                               decoder_use_batchnorm=True,
                                decoder_channels=(512, 256, 128, 64, 32, ),
                                 decoder_attention_type='scse',
-                                 in_channels=3,
+                                 in_channels=16,
                                   classes=1,
                                    activation=None,
                                     aux_params=None)
