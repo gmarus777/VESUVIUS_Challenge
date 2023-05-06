@@ -254,7 +254,7 @@ class UNET_TILE_lit(pl.LightningModule):
             in_channels=self.z_dim,
             out_channels=1,
             channels=( 32, 64, 128, 256,512, ),
-            strides=(2, 2, 2, 2,2,),
+            strides=(2, 2, 2, 2,),
             num_res_units=3,
             dropout=0,
             norm='batch',
