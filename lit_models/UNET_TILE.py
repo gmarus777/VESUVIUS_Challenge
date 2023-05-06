@@ -42,11 +42,11 @@ smp.Unet(
             decoder_channels=( 512, 256, 256, 128, 64,  ),
 GCP:
 
-.UnetPlusPlus(encoder_name='resnet34',
+smp.UnetPlusPlus(encoder_name='se_resnext50_32x4d',
                             encoder_depth=5,
                              encoder_weights='imagenet',
                               decoder_use_batchnorm=True,
-                               decoder_channels=(256, 128, 64, 32, 16),
+                               decoder_channels=(512 256, 128, 64, 32, ),
                                 decoder_attention_type=scse,
                                  in_channels=3,
                                   classes=1,
@@ -120,7 +120,10 @@ smp.Unet(
             in_channels=self.z_dim,
             classes=1,
             activation=None,
-        )                              
+        )    
+        
+        
+                                  
 
 ### MONAI ###
         self.diceloss = monai.losses.DiceLoss(include_background=True,
@@ -225,7 +228,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(2)) #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss() #pos_weight=torch.tensor(1)
 
 
 
@@ -246,18 +249,16 @@ class UNET_TILE_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return  monai.networks.nets.UNet(
-            spatial_dims=2,
-            in_channels=self.z_dim,
-            out_channels=1,
-            channels=( 32, 64, 128,256,512, 1024, 1280),
-            strides=(2, 2, 2, 2,2, 2),
-            num_res_units=5,
-            dropout=0,
-            norm='batch',
-            bias =False,
-
-        )
+        return  smp.UnetPlusPlus(encoder_name='se_resnext50_32x4d',
+                            encoder_depth=5,
+                             encoder_weights='imagenet',
+                              decoder_use_batchnorm=True,
+                               decoder_channels=(512, 256, 128, 64, 32, ),
+                                decoder_attention_type='scse',
+                                 in_channels=3,
+                                  classes=1,
+                                   activation=None,
+                                    aux_params=None)
 
     def forward(self, x):
         return self.model(x)
