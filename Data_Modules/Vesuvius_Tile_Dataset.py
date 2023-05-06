@@ -12,8 +12,8 @@ from albumentations import ImageOnlyTransform
 import pytorch_lightning as pl
 from tqdm.auto import tqdm
 
-PATCH_SIZE = 256
-Z_DIM = 16
+PATCH_SIZE = 224
+Z_DIM = 32
 
 PATH = Path().resolve().parents[0]
 # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
