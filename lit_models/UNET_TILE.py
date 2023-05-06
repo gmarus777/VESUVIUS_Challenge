@@ -209,6 +209,24 @@ class UNET_TILE_lit(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
+        self.loss_monai_focal_dice =monai.losses.DiceFocalLoss(include_background=True,
+                                                               to_onehot_y=False,
+                                                               sigmoid=True,
+                                                               softmax=False,
+                                                               other_act=None,
+                                                               squared_pred=False,
+                                                               jaccard=False,
+                                                               reduction='mean',
+                                                               smooth_nr=1e-05,
+                                                               smooth_dr=1e-05,
+                                                               batch=True,
+                                                               gamma=2.0,
+                                                               focal_weight=None,
+                                                               lambda_dice=1.0,
+                                                               lambda_focal=1.0
+                                                               )
+
+
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5)) #pos_weight=torch.tensor(1)
 
 
@@ -224,8 +242,9 @@ class UNET_TILE_lit(pl.LightningModule):
 
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
-        # return self.loss_bce(y_pred*mask, y_true.float())
-        return self.loss_bce(y_pred , y_true.float())  #+ 0.5*self.loss_tversky(y_pred , y_true.float())
+
+        return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
+        #return self.loss_bce(y_pred , y_true.float())  #+ 0.5*self.loss_tversky(y_pred , y_true.float())
 
 
 
@@ -286,18 +305,20 @@ class UNET_TILE_lit(pl.LightningModule):
 
         bce = self.loss_bce(outputs , labels.float())
         dice = self.loss_dice(outputs, labels.float())
-        #focal = self.loss_focal(outputs , labels.float())
-        #tversky = self.loss_tversky(outputs , labels.float())
-        #monai_focal = self.masked_focal(outputs, labels)
-        #monai_tversky = self.monai_masked_tversky(outputs, labels)
-        #my_focal = self.mine_focal(outputs , labels.float())
 
+        # MY FBETA
+        #y_preds = torch.sigmoid(outputs).to('cpu').numpy()
+        #fbeta_sm, precision_sm, recall_sm = fbeta_numpy(y_preds, labels)
+
+
+        # SMP METRICS
+        smooth = 1e-5
         tp, fp, fn, tn = smp.metrics.get_stats(torch.sigmoid(outputs ), labels.long(), mode='binary', threshold=THRESHOLD)
         tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
-        recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
+        recall = smp.metrics.recall(tp+smooth, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
-        precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro")
+        precision = smp.metrics.precision(tp+smooth, fp, fn, tn, reduction="micro")
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
 
@@ -323,9 +344,9 @@ class UNET_TILE_lit(pl.LightningModule):
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
-        #self.log("Monai Focal", monai_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
-        #self.log("Monai Tversky", monai_tversky.item(), on_step=False, on_epoch=True, prog_bar=True)
-        #self.log("My  Focal", my_focal.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("fbeta_sm", fbeta_sm.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log(" precision_sm", precision_sm.item(), on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("recall_sm", recall_sm.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE", dice, on_step=False, on_epoch=True, prog_bar=True)
         #self.log("FOCAL", focal, on_step=False, on_epoch=True, prog_bar=True)
@@ -346,9 +367,9 @@ class UNET_TILE_lit(pl.LightningModule):
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
             wandb.log({"FBETA": fbeta.item()})
-           # wandb.log({"Monai Focal": monai_focal.item()})
-            #wandb.log({"Monai Tversky": monai_tversky.item()})
-            #wandb.log({"My Focal": my_focal.item()})
+            #wandb.log({"fbeta_sm": fbeta_sm.item()})
+            #wandb.log({"precision_sm": precision_sm.item()})
+            #wandb.log({"recall_sm": recall_sm.item()})
             wandb.log({"BCE": bce})
             wandb.log({"DICE": dice.item()})
             #wandb.log({"Focal": focal.item()})
@@ -450,6 +471,26 @@ class GradualWarmupSchedulerV2(GradualWarmupScheduler):
         else:
             return [base_lr * ((self.multiplier - 1.) * self.last_epoch / self.total_epoch + 1.) for base_lr in
                     self.base_lrs]
+
+
+
+
+
+def fbeta_numpy(targets, preds, beta=0.5, smooth=1e-5):
+    """
+    https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/397288
+    """
+    y_true_count = targets.sum()
+    ctp = preds[targets==1].sum()
+    cfp = preds[targets==0].sum()
+    beta_squared = beta * beta
+
+    c_precision = ctp / (ctp + cfp + smooth)
+    c_recall = ctp / (y_true_count + smooth)
+    dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
+
+    return dice, c_precision, c_recall
+
 
 
 class FocalLoss(nn.Module):
