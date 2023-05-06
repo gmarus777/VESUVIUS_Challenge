@@ -222,13 +222,13 @@ class UNET_TILE_lit(pl.LightningModule):
 
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
-                                                   log_loss=True,
+                                                   log_loss=False,
                                                    from_logits=True,
                                                    alpha=0.5,
                                                    beta=0.5,
                                                    gamma=2.0)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(2)) #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss() #pos_weight=torch.tensor(1)
 
 
 
@@ -249,18 +249,18 @@ class UNET_TILE_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        return  monai.networks.nets.UNet(
-            spatial_dims=2,
+        return  smp.Unet(
+            encoder_name='se_resnext50_32x4d' ,#'se_resnext50_32x4d',
+            encoder_weights='imagenet',
             in_channels=self.z_dim,
-            out_channels=1,
-            channels=( 32, 64, 128, 256,512, ),
-            strides=(2, 2, 2, 2,),
-            num_res_units=3,
-            dropout=0,
-            norm='batch',
-            bias =False,
+            classes=1,
+            activation=None,
+            encoder_depth=5,
+            decoder_use_batchnorm=True,
+            decoder_channels=( 512, 256, 128, 64, 32  ),
 
         )
+
 
     def forward(self, x):
         return self.model(x)
