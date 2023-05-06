@@ -288,7 +288,7 @@ class UNET_TILE_lit(pl.LightningModule):
         tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
         recall = smp.metrics.recall(tp, fp, fn, tn, reduction="micro")
-        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.4, reduction='micro')
+        fbeta = smp.metrics.fbeta_score(tp, fp, fn, tn, beta=.5, reduction='micro')
         precision = smp.metrics.precision(tp, fp, fn, tn, reduction="micro")
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
