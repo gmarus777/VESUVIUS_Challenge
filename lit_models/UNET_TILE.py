@@ -249,7 +249,7 @@ class UNET_TILE_lit(pl.LightningModule):
 
 
     def _init_model(self):
-        monai.networks.nets.FlexibleUNet(in_channels=self.z_dim,
+        return monai.networks.nets.FlexibleUNet(in_channels=self.z_dim,
                                          out_channels=1,
                                          backbone='efficientnet-b3',
                                          pretrained=True,
