@@ -25,8 +25,7 @@ INPUT_DIR = KAGGLE_DIR / "input"
 COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
 COMPETITION_DATA_DIR_str = "kaggle/input/vesuvius-challenge-ink-detection/"
 
-TRAIN_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_train_1.csv"
-TEST_DATA_CSV_PATH = COMPETITION_DATA_DIR / "data_test_1.csv"
+
 
 '''
 class CFG:
