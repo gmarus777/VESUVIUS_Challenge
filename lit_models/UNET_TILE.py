@@ -227,7 +227,7 @@ class UNET_TILE_lit(pl.LightningModule):
                                                                )
 
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.3)) #pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5)) #pos_weight=torch.tensor(1)
 
 
 
@@ -243,19 +243,26 @@ class UNET_TILE_lit(pl.LightningModule):
         # return 0.2*self.monai_masked_tversky(y_pred, y_true, mask) +  0.5*self.loss_bce(y_pred*mask, y_true.float())
         # return  self.monai_masked_tversky(y_pred, y_true, mask) +  self.mine_focal(y_pred*mask, y_true.float())
 
-        return self.loss_bce(y_pred , y_true.float()) + 0.8*self.loss_monai_focal_dice(y_pred , y_true.float() )
+        return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
         #return self.loss_bce(y_pred , y_true.float())  #+ 0.5*self.loss_tversky(y_pred , y_true.float())
 
 
 
     def _init_model(self):
-        return smp.Unet(
-            encoder_name='efficientnet-b3' ,#'se_resnext50_32x4d',
-            encoder_weights='imagenet',
-            in_channels=self.z_dim,
-            classes=1,
-            activation=None,
-        )
+        monai.networks.nets.FlexibleUNet(in_channels=self.z_dim,
+                                         out_channels=1,
+                                         backbone='efficientnet-b3',
+                                         pretrained=True,
+                                         decoder_channels=(512, 256, 128, 64, 32),
+                                         spatial_dims=2,
+                                         norm=('batch', {'eps': 0.001, 'momentum': 0.1}),
+                                         # act=('relu', {'inplace': True}),
+                                         act=None,
+                                         dropout=0.0,
+                                         decoder_bias=False,
+                                         upsample='deconv',
+                                         interp_mode='nearest',
+                                         is_pad=False)
 
     def forward(self, x):
         return self.model(x)
@@ -316,9 +323,9 @@ class UNET_TILE_lit(pl.LightningModule):
         tp, fp, fn, tn = smp.metrics.get_stats(torch.sigmoid(outputs), labels.long(), mode='binary', threshold=THRESHOLD)
         tp, fp, fn, tn = tp.to(DEVICE), fp.to(DEVICE), fn.to(DEVICE), tn.to(DEVICE)
         accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
-        recall = smp.metrics.recall(tp, fp, fn+smooth, tn, reduction="micro")
+        recall = smp.metrics.recall(tp+smooth, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp+smooth, fp, fn, tn, beta=.5, reduction='micro', zero_division=0)
-        precision = smp.metrics.precision(tp, fp+smooth, fn, tn, reduction="micro")
+        precision = smp.metrics.precision(tp+smooth, fp, fn, tn, reduction="micro")
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
 
