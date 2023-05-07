@@ -1,5 +1,3 @@
-import segmentation_models_pytorch as smp
-
 from pathlib import Path
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
@@ -8,40 +6,19 @@ import torch
 import os
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from albumentations import ImageOnlyTransform
 import pytorch_lightning as pl
 from tqdm.auto import tqdm
 
-PATCH_SIZE = 224
-Z_DIM = 24
 
-PATH = Path().resolve().parents[0]
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-KAGGLE_DIR = PATH / "kaggle"
 
-INPUT_DIR = KAGGLE_DIR / "input"
-
-COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
-COMPETITION_DATA_DIR_str = "kaggle/input/vesuvius-challenge-ink-detection/"
+#COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
+#COMPETITION_DATA_DIR_str = "kaggle/input/vesuvius-challenge-ink-detection/"
 
 
 
 '''
-class CFG:
-    train_fragment_id=[2,3],
-    val_fragment_id=[1],
-    batch_size = 32,
-    patch_size = 224,
-    z_dim = 16,
-    stride = patch_size // 2,
-    comp_dataset_path = COMPETITION_DATA_DIR
-    num_workers = 8
-    on_gpu = True
-    test_fragment_id = ['a','b']
-
-
-
+FOR CFG Template look at CFG_TEMPLATE.py
 
 '''
 
@@ -322,183 +299,3 @@ class Vesuvius_Tile_Datset_TEST(Dataset):
 
 
 
-
-'''
-Additional 
-
-A..augmentations.geometric.transforms.Perspective(scale=(0.05, 0.1),
-                                                    keep_size=True,
-                                                     pad_mode=0, 
-                                                     pad_val=0, 
-                                                     mask_pad_val=0, 
-                                                     fit_output=False, 
-                                                     interpolation=1, 
-                                                     always_apply=False, 
-                                                     p=0.5)
-
-
-A.augmentations.geometric.resize.RandomScale(scale_limit=0.1, 
-                                                interpolation=1, 
-                                                always_apply=False, 
-                                                p=0.5)
-
-
-
-A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.05, 
-                                                        shift_limit=0.05, 
-                                                        interpolation=1, 
-                                                        border_mode=4, 
-                                                        value=None, 
-                                                        mask_value=None, 
-                                                        always_apply=False, 
-                                                        p=0.5)    
-
-
-
-
-A.augmentations.geometric.transforms.ElasticTransform(alpha=1, 
-                                                        sigma=50, 
-                                                        alpha_affine=50, 
-                                                        interpolation=1, 
-                                                        border_mode=4, 
-                                                        value=None, 
-                                                        mask_value=None, 
-                                                        always_apply=False, 
-                                                        approximate=False, 
-                                                        same_dxdy=False, 
-                                                        p=0.5)                                           
-
-
-
-
-
-
-Original Transforms:
-
-
-    class Image_Transforms:
-
-    train_transforms = A.Compose(
-        [
-            # A.RandomResizedCrop(
-            #     size, size, scale=(0.85, 1.0)),
-            A.Resize(PATCH_SIZE, PATCH_SIZE),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.RandomBrightnessContrast(p=0.75),
-            A.ShiftScaleRotate(p=0.75),
-            A.OneOf([
-                A.GaussNoise(var_limit=[10, 50]),
-                A.GaussianBlur(),
-                A.MotionBlur(),
-            ], p=0.4),
-            A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
-            A.CoarseDropout(max_holes=1, max_width=int(PATCH_SIZE * 0.3), max_height=int(PATCH_SIZE * 0.3),
-                            mask_fill_value=0, p=0.5),
-            # A.Cutout(max_h_size=int(size * 0.6),
-            #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
-            A.Normalize(
-                mean=[0] * Z_DIM,
-                std=[1] * Z_DIM,
-            ),
-            ToTensorV2(transpose_mask=True),
-        ]
-    )
-
-    val_transforms = A.Compose(
-        [
-        A.Resize(PATCH_SIZE, PATCH_SIZE),
-        A.Normalize(
-            mean=[0] * Z_DIM,
-            std=[1] * Z_DIM
-        ),
-
-        ToTensorV2(transpose_mask=True),
-    ]
-    )
-
-
-
-
-
-
-
-    Updated:
-
-
-    class Image_Transforms:
-
-    train_transforms = A.Compose(
-        [
-            # A.RandomResizedCrop(
-            #     size, size, scale=(0.85, 1.0)),
-            #A.Resize(PATCH_SIZE, PATCH_SIZE),
-            A.augmentations.geometric.resize.RandomScale(scale_limit=0.1,
-                                                         interpolation=1,
-                                                         always_apply=False,
-                                                         p=0.3),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.RandomBrightnessContrast(.25, (-.3, .3), p=0.75),
-            A.ShiftScaleRotate(p=0.75),
-            A.GaussianBlur(blur_limit=(3, 7), p=0.4),
-            A.GaussNoise(var_limit=[10, 50], p=0.4),
-
-    A.OneOf([
-                A.GaussNoise(var_limit=[10, 60]),
-                A.GaussianBlur(blur_limit=(1, 9)),
-                A.MotionBlur(blur_limit=9),
-            ], p=0.3),
-
-            A.augmentations.geometric.transforms.ElasticTransform(alpha=120,
-                                                                  sigma=120*0.05,
-                                                                  alpha_affine=120 * 0.03,
-                                                                  interpolation=1,
-                                                                  border_mode=cv2.BORDER_CONSTANT,
-                                                                  value=0,
-                                                                  mask_value=0,
-                                                                  always_apply=False,
-                                                                  approximate=False,
-                                                                  same_dxdy=False,
-                                                                  p=0.4),
-
-            A.augmentations.geometric.transforms.OpticalDistortion(distort_limit=0.1,
-                                                                   shift_limit=0.02,
-                                                                   interpolation=1,
-                                                                   border_mode=cv2.BORDER_CONSTANT,
-                                                                   value=0,
-                                                                   mask_value=0,
-                                                                   always_apply=False,
-                                                                   p=0.3),
-
-            A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.5),
-            A.CoarseDropout(max_holes=1, max_width=64, max_height=64,
-                            mask_fill_value=0, p=0.5),
-            A.CoarseDropout(max_holes=1, max_width=38, max_height=32,
-                            mask_fill_value=0, p=0.5),
-            # A.Cutout(max_h_size=int(size * 0.6),
-            #          max_w_size=int(size * 0.6), num_holes=1, p=1.0),
-            A.Resize(PATCH_SIZE, PATCH_SIZE),
-            A.Normalize(
-                mean=[0] * Z_DIM,
-                std=[1] * Z_DIM,
-            ),
-            ToTensorV2(transpose_mask=True),
-        ]
-    )
-
-    val_transforms = A.Compose(
-        [
-        A.Resize(PATCH_SIZE, PATCH_SIZE),
-        A.Normalize(
-            mean=[0] * Z_DIM,
-            std=[1] * Z_DIM
-        ),
-
-        ToTensorV2(transpose_mask=True),
-    ]
-    )
-
-
-
-    '''
