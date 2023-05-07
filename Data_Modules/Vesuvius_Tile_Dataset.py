@@ -13,7 +13,7 @@ import pytorch_lightning as pl
 from tqdm.auto import tqdm
 
 PATCH_SIZE = 256
-Z_DIM = 55
+Z_DIM = 48
 
 PATH = Path().resolve().parents[0]
 # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
