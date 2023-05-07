@@ -281,7 +281,7 @@ class UNET_TILE_lit(pl.LightningModule):
                               backbone = 'efficientnet-b4',
                               pretrained=True,
                               decoder_channels=( 768, 512, 256, 128,64  ),
-                              spatial_dims=2,
+              gi                spatial_dims=2,
                               norm=('instance', {'eps': 0.001, 'momentum': 0.1}),
                               #act=('relu', {'inplace': True}),
                               act = None,
