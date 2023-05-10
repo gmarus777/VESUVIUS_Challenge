@@ -173,7 +173,7 @@ class Lit_Model(pl.LightningModule):
 
         # Monitor BCE and Dice loss
         bce = self.loss_bce(outputs , labels.float())
-        dice = self.loss_dice(outputs, labels.float())
+        dice = self.loss_tversky(outputs, labels.float())
 
 
         # SMP METRICS
