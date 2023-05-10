@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 
 
 
-COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
+#COMPETITION_DATA_DIR = INPUT_DIR / "vesuvius-challenge-ink-detection"
 #COMPETITION_DATA_DIR_str = "kaggle/input/vesuvius-challenge-ink-detection/"
 
 
