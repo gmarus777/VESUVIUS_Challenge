@@ -40,8 +40,8 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         self.test_transform = self.get_transforms('test')
 
         if self.cfg.stage.lower() == 'train':
-            self.train_data, self.train_labels = self.get_train_dataset()
-            self.val_data, self.val_labels, self.val_pos = self.get_val_dataset()
+            self.train_data, self.train_labels, self.train_binary_masks = self.get_train_dataset()
+            self.val_data, self.val_labels, self.val_pos, self.val_binary_masks = self.get_val_dataset()
 
 
             self.train_dataset = Vesuvius_Tile_Datset(images=self.train_data,
