@@ -245,7 +245,7 @@ class Vesuvius_Tile_Datset(Dataset):
     def __getitem__(self, idx):
         image = self.images[idx]
         label = self.labels[idx]
-        bianary_mask = self.bianary_masks[idx]
+        #bianary_mask = self.bianary_masks[idx]
 
         if self.transform:
             data = self.transform(image=image, mask=label)
