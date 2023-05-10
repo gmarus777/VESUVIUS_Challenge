@@ -235,7 +235,7 @@ class Vesuvius_Tile_Datset(Dataset):
     def __init__(self, images, labels=None, binary_masks=None,  transform=None):
         self.images = images
         self.labels = labels
-        self.bianary_masks =
+        self.bianary_masks =binary_masks
         self.transform = transform
 
     def __len__(self):
