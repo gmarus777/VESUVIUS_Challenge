@@ -69,8 +69,8 @@ class Lit_Model(pl.LightningModule):
                                                    classes=None,
                                                    log_loss=False,
                                                    from_logits=True,
-                                                   alpha=0.5,
-                                                   beta=0.5,
+                                                   alpha=0.8,
+                                                   beta=0.2,
                                                    gamma=2.0)
 
         self.loss_focal = smp.losses.FocalLoss(mode='binary',
@@ -107,7 +107,7 @@ class Lit_Model(pl.LightningModule):
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        return 2.5*self.loss_bce(y_pred , y_true.float())  +  0.9*self.loss_tversky(y_pred , y_true.float()) + 0.5*self.loss_focal(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  +  self.loss_tversky(y_pred , y_true.float()) #+ 0.4*self.loss_focal(y_pred , y_true.float())
 
 
 
