@@ -40,18 +40,18 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         self.test_transform = self.get_transforms('test')
 
         if self.cfg.stage.lower() == 'train':
-            self.train_data, self.train_labels = self.get_train_dataset()
-            self.val_data, self.val_labels, self.val_pos = self.get_val_dataset()
+            self.train_data, self.train_labels, self.train_binary_masks = self.get_train_dataset()
+            self.val_data, self.val_labels, self.val_pos, self.val_binary_masks = self.get_val_dataset()
 
 
             self.train_dataset = Vesuvius_Tile_Datset(images=self.train_data,
                                                       labels=self.train_labels,
+                                                      binary_masks=  self.train_binary_masks,
                                                       transform=self.train_transform)
 
             self.val_dataset = Vesuvius_Tile_Datset(images=self.val_data,
                                                     labels=self.val_labels,
-
-
+                                                    binary_masks= self.val_binary_masks,
                                                     transform=self.val_transform)
 
         # TEST IS NOT FINISHED: DO IT
@@ -66,9 +66,10 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
     def get_train_dataset(self):
         train_images = []
         train_masks = []
+        train_binary_masks = []
 
         for fragment_id in self.cfg.train_fragment_id:
-            image, mask = self.read_image_mask('train', fragment_id)
+            image, mask, binary_mask = self.read_image_mask('train', fragment_id)
 
             x1_list = list(range(0, image.shape[1] - self.cfg.patch_size + 1, self.cfg.stride))
             y1_list = list(range(0, image.shape[0] - self.cfg.patch_size + 1, self.cfg.stride))
@@ -81,16 +82,18 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
                     train_images.append(image[y1:y2, x1:x2])
                     train_masks.append(mask[y1:y2, x1:x2, None])
+                    train_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
 
-        return train_images, train_masks
+        return train_images, train_masks, train_binary_masks
 
     def get_val_dataset(self):
         valid_images = []
         valid_masks = []
+        valid_binary_masks = []
         valid_xyxys = []
 
         for fragment_id in self.cfg.val_fragment_id:
-            image, mask = self.read_image_mask('train', fragment_id)
+            image, mask, binary_mask = self.read_image_mask('train', fragment_id)
 
             x1_list = list(range(0, image.shape[1] - self.cfg.patch_size + 1, self.cfg.stride))
             y1_list = list(range(0, image.shape[0] - self.cfg.patch_size + 1, self.cfg.stride))
@@ -103,10 +106,11 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
                     valid_images.append(image[y1:y2, x1:x2])
                     valid_masks.append(mask[y1:y2, x1:x2, None])
+                    valid_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
 
                     valid_xyxys.append([x1, y1, x2, y2])
 
-        return valid_images, valid_masks, valid_xyxys
+        return valid_images, valid_masks,  valid_xyxys, valid_binary_masks
 
 
 
@@ -170,38 +174,13 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
         mask = mask.astype('float32')
         mask /= 255.0
 
-        return images, mask
-
-
-    def read_image_mask_test(self, stage, fragment_id):
-
-        images = []
-
-        # idxs = range(65)
-        mid = 65 // 2
-        start = mid - self.cfg.z_dim // 2
-        end = mid + self.cfg.z_dim // 2
-        idxs = range(start, end)
-
-        for i in tqdm(idxs):
-            image = cv2.imread(self.cfg.competition_data_dir + f"{stage}/{fragment_id}/surface_volume/{i:02}.tif", 0)
-
-            pad0 = (self.cfg.patch_size - image.shape[0] % self.cfg.patch_size)
-            pad1 = (self.cfg.patch_size - image.shape[1] % self.cfg.patch_size)
-
-            image = np.pad(image, [(0, pad0), (0, pad1)], constant_values=0)
-
-            images.append(image)
-
-        images = np.stack(images, axis=2)
-
-        binary_mask  = cv2.imread(COMPETITION_DATA_DIR_str + f"test/{fragment_id}/mask.png", 0)
+        binary_mask = cv2.imread(self.cfg.competition_data_dir + f"train/{fragment_id}/mask.png", 0)
         binary_mask = (binary_mask / 255).astype(int)
-        pad0 = (self.cfg.patch_size - binary_mask.shape[0] % self.cfg.patch_size)
-        pad1 = (self.cfg.patch_size - binary_mask.shape[1] % self.cfg.patch_size)
-        binary_mask = np.pad(binary_mask, [(0, pad0), (0, pad1)], constant_values=0)
 
-        return images, binary_mask
+        return images, mask, binary_mask
+
+
+
 
 
 
@@ -253,9 +232,10 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
 
 class Vesuvius_Tile_Datset(Dataset):
-    def __init__(self, images, labels=None,  transform=None):
+    def __init__(self, images, labels=None, binary_masks=None,  transform=None):
         self.images = images
         self.labels = labels
+        self.bianary_masks = binary_masks
         self.transform = transform
 
     def __len__(self):
@@ -265,36 +245,20 @@ class Vesuvius_Tile_Datset(Dataset):
     def __getitem__(self, idx):
         image = self.images[idx]
         label = self.labels[idx]
+        bianary_mask = self.bianary_masks[idx]
+        masks = [label, bianary_mask]
 
         if self.transform:
-            data = self.transform(image=image, mask=label)
+            data = self.transform(image=image, masks=masks)
             image = data['image']
-            label = data['mask']
-
-        return image, label
+            label, binary_mask = data['masks']
 
 
-class Vesuvius_Tile_Datset_TEST(Dataset):
-    def __init__(self, images, test_pos=None, binary_masks =None,  transform=None):
-        self.images = images
-        self.test_pos = test_pos
-        self.binary_masks = binary_masks
-        self.transform = transform
 
-    def __len__(self):
-        # return len(self.df)
-        return len(self.images)
+        return image, label, binary_mask
 
-    def __getitem__(self, idx):
-        image = self.images[idx]
-        label = self.labels[idx]
 
-        if self.transform:
-            data = self.transform(image=image, mask=label)
-            image = data['image']
-            label = data['mask']
 
-        return image, label
 
 
 
