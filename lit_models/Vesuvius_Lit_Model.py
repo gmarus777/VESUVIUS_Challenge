@@ -136,11 +136,14 @@ class Lit_Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # get images and labels
-        images, labels = batch
+        images, labels, binary_mask = batch
         labels = labels.long()
 
         # run images through the model
         outputs = self.model(images)
+
+        # apply binary mask
+        outputs = outputs*binary_mask
 
         # apply loss functions
         loss = self.loss_function(outputs, labels)
@@ -158,7 +161,7 @@ class Lit_Model(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # get images and labels
-        images, labels = batch
+        images, labels, binary_mask = batch
         labels = labels.long()
 
         # run images through the model
@@ -166,6 +169,9 @@ class Lit_Model(pl.LightningModule):
 
         # apply loss functions
         loss = self.loss_function(outputs, labels)
+
+        # apply binary mask
+        outputs = outputs * binary_mask
 
         # Get predicitons with 0.5 TH to compute accuracy
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()

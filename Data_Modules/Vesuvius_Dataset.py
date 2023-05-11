@@ -46,12 +46,12 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
             self.train_dataset = Vesuvius_Tile_Datset(images=self.train_data,
                                                       labels=self.train_labels,
+                                                      binary_masks=  self.train_binary_masks,
                                                       transform=self.train_transform)
 
             self.val_dataset = Vesuvius_Tile_Datset(images=self.val_data,
                                                     labels=self.val_labels,
-
-
+                                                    binary_masks= self.val_binary_masks,
                                                     transform=self.val_transform)
 
         # TEST IS NOT FINISHED: DO IT
@@ -235,7 +235,7 @@ class Vesuvius_Tile_Datset(Dataset):
     def __init__(self, images, labels=None, binary_masks=None,  transform=None):
         self.images = images
         self.labels = labels
-        self.bianary_masks =binary_masks
+        self.bianary_masks = binary_masks
         self.transform = transform
 
     def __len__(self):
@@ -245,38 +245,20 @@ class Vesuvius_Tile_Datset(Dataset):
     def __getitem__(self, idx):
         image = self.images[idx]
         label = self.labels[idx]
-        #bianary_mask = self.bianary_masks[idx]
+        binary_masks = self.bianary_masks[idx]
+        masks = [label, binary_masks]
 
         if self.transform:
-            data = self.transform(image=image, mask=label)
+            data = self.transform(image=image, masks=masks)
             image = data['image']
-            label = data['mask']
+            label, binary_mask = data['masks']
 
 
-        return image, label
+
+        return image, label, binary_mask
 
 
-class Vesuvius_Tile_Datset_TEST(Dataset):
-    def __init__(self, images, test_pos=None, binary_masks =None,  transform=None):
-        self.images = images
-        self.test_pos = test_pos
-        self.binary_masks = binary_masks
-        self.transform = transform
 
-    def __len__(self):
-        # return len(self.df)
-        return len(self.images)
-
-    def __getitem__(self, idx):
-        image = self.images[idx]
-        label = self.labels[idx]
-
-        if self.transform:
-            data = self.transform(image=image, mask=label)
-            image = data['image']
-            label = data['mask']
-
-        return image, label
 
 
 
