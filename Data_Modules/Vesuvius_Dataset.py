@@ -251,7 +251,7 @@ class Vesuvius_Tile_Datset(Dataset):
         if self.transform:
             data = self.transform(image=image, mask=label)
             image = data['image']
-            label =  data['masks']
+            label =  data['mask']
             #label, binary_mask = data['masks']
 
 
