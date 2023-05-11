@@ -81,7 +81,7 @@ class Lit_Model(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.3))  # pos_weight=torch.tensor(1)
 
 
         # MONAI loss functions
@@ -107,7 +107,7 @@ class Lit_Model(pl.LightningModule):
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        return self.loss_bce(y_pred , y_true.float())  +  0.75*self.loss_tversky(y_pred , y_true.float()) #+ 0.4*self.loss_focal(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  +  self.loss_tversky(y_pred , y_true.float()) #+ 0.4*self.loss_focal(y_pred , y_true.float())
 
 
 
@@ -136,14 +136,14 @@ class Lit_Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # get images and labels
-        images, labels, binary_mask = batch
+        images, labels = batch
         labels = labels.long()
 
         # run images through the model
         outputs = self.model(images)
 
         # apply binary mask
-        outputs = outputs*binary_mask
+        #outputs = outputs*binary_mask
 
         # apply loss functions
         loss = self.loss_function(outputs, labels)
@@ -161,7 +161,7 @@ class Lit_Model(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # get images and labels
-        images, labels, binary_mask = batch
+        images, labels = batch
         labels = labels.long()
 
         # run images through the model
@@ -171,7 +171,7 @@ class Lit_Model(pl.LightningModule):
         loss = self.loss_function(outputs, labels)
 
         # apply binary mask
-        outputs = outputs * binary_mask
+        #outputs = outputs * binary_mask
 
         # Get predicitons with 0.5 TH to compute accuracy
         preds = torch.sigmoid(outputs.detach()).gt(.5).int()
