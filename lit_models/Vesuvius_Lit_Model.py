@@ -69,8 +69,8 @@ class Lit_Model(pl.LightningModule):
                                                    classes=None,
                                                    log_loss=False,
                                                    from_logits=True,
-                                                   alpha=0.8,
-                                                   beta=0.2,
+                                                   alpha=0.75,
+                                                   beta=0.25,
                                                    gamma=2.0)
 
         self.loss_focal = smp.losses.FocalLoss(mode='binary',
@@ -81,7 +81,9 @@ class Lit_Model(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1)
+        self.loss_lovasz = smp.losses.LovaszLoss(mode='binary', per_image=False, ignore_index=None, from_logits=True)
+
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.3))  # pos_weight=torch.tensor(1)
 
 
         # MONAI loss functions
@@ -107,7 +109,7 @@ class Lit_Model(pl.LightningModule):
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        return self.loss_bce(y_pred , y_true.float())  + self.loss_tversky(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  + self.loss_tversky(y_pred , y_true.float()) + 0.5*self.loss_lovasz(y_pred , y_true.float())
 
 
 
