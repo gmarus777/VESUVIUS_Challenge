@@ -138,7 +138,7 @@ class Lit_Model(pl.LightningModule):
         # get images and labels
         images, labels = batch
         labels = labels.long()
-        images = images.unsqueeze(1)
+        images, labels = images.unsqueeze(1), labels.unsqueeze(1)
 
         # run images through the model
         outputs = self.model(images)
@@ -164,7 +164,7 @@ class Lit_Model(pl.LightningModule):
         # get images and labels
         images, labels = batch
         labels = labels.long()
-        images = images.unsqueeze(1)
+        images, labels = images.unsqueeze(1), labels.unsqueeze(1)
 
         # run images through the model
         outputs = self.model(images)
