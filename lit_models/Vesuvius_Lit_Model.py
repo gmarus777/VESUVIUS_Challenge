@@ -165,6 +165,7 @@ class Lit_Model(pl.LightningModule):
         images, labels = batch
         labels = labels.long()
         images = images.unsqueeze(1)
+        print(images.shape)
 
         # run images through the model
         outputs = self.model(images)
