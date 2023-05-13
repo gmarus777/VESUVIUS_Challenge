@@ -69,8 +69,8 @@ class Lit_Model(pl.LightningModule):
                                                    classes=None,
                                                    log_loss=False,
                                                    from_logits=True,
-                                                   alpha=0.75,
-                                                   beta=0.25,
+                                                   alpha=0.7,
+                                                   beta=0.3,
                                                    gamma=2.0)
 
         self.loss_focal = smp.losses.FocalLoss(mode='binary',
@@ -81,7 +81,7 @@ class Lit_Model(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.3))  # pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1)
 
 
         # MONAI loss functions
