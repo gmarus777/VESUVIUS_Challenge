@@ -8,7 +8,7 @@ from timm.models.registry import register_model
 from timm.models.vision_transformer import _cfg
 from mmseg.models.builder import BACKBONES
 #from mmseg.utils import get_root_logger
-from mmcv.runner import load_checkpoint
+#from mmcv.runner import load_checkpoint
 import math
 
 
