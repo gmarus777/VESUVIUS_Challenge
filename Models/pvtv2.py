@@ -7,7 +7,7 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 from timm.models.vision_transformer import _cfg
 from mmseg.models.builder import BACKBONES
-from mmseg.utils import get_root_logger
+#from mmseg.utils import get_root_logger
 from mmcv.runner import load_checkpoint
 import math
 
@@ -272,8 +272,9 @@ class PyramidVisionTransformerV2(nn.Module):
 
     def init_weights(self, pretrained=None):
         if isinstance(pretrained, str):
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, map_location='cpu', strict=False, logger=logger)
+            #logger = get_root_logger()
+            #load_checkpoint(self, pretrained, map_location='cpu', strict=False, logger=logger)
+            pass
 
     def freeze_patch_emb(self):
         self.patch_embed1.requires_grad = False
