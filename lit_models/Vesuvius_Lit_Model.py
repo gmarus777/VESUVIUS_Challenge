@@ -83,7 +83,7 @@ class Lit_Model(pl.LightningModule):
 
         self.loss_lovasz = smp.losses.LovaszLoss(mode='binary', per_image=False, ignore_index=None, from_logits=True)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.35))  # pos_weight=torch.tensor(1)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.3))  # pos_weight=torch.tensor(1)
 
 
         # MONAI loss functions
