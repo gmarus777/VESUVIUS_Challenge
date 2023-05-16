@@ -610,11 +610,10 @@ class SwinTransformer(nn.Module):
         self.permute = Permute([0, 3, 1, 2])  # B H W C -> B C H W
 
 
-        self.head = nn.Sequential(
-            nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(num_features, num_classes, kernel_size=1)
-        )
+        #self.head = nn.Sequential(
+         #   nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
+        #    nn.ReLU(inplace=True),
+        #    nn.Conv2d(num_features, num_classes, kernel_size=1))
 
         #self.head = nn.Linear(num_features, num_classes)
 
@@ -627,7 +626,7 @@ class SwinTransformer(nn.Module):
 
     def forward(self, x):
         #print('initial', x.shape)
-        x = nn.Conv2d(x.shape[1], self.embed_dim, kernel_size=1, stride=1, padding=0)(x)
+        #conv = nn.Conv2d(x.shape[1], self.embed_dim, kernel_size=1, stride=1, padding=0).to
         #print('after conv', x.shape)
         x = self.permute_init(x)
         #x = self.features(x)
