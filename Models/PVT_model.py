@@ -355,10 +355,11 @@ class PyramidVisionTransformerV2(nn.Module):
         # return x.mean(dim=1)
 
     def forward(self, x):
-        x = self.forward_features(x)
+
+        out = self.forward_features(x)
 
 
-        return x
+        return [x] + out
 
 
 class DWConv(nn.Module):

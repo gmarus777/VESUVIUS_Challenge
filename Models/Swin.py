@@ -39,6 +39,7 @@ __all__ = [
 ]
 
 
+
 def _patch_merging_pad(x: torch.Tensor) -> torch.Tensor:
     H, W, _ = x.shape[-3:]
     x = F.pad(x, (0, 0, 0, W % 2, 0, H % 2))
@@ -512,6 +513,7 @@ class SwinTransformerBlockV2(SwinTransformerBlock):
         return x
 
 
+
 class SwinTransformer(nn.Module):
     """
     Implements Swin Transformer from the `"Swin Transformer: Hierarchical Vision Transformer using
@@ -535,36 +537,29 @@ class SwinTransformer(nn.Module):
     def __init__(
         self,
         #patch_size: List[int],
+
         embed_dim: int,
         depths: List[int],
         num_heads: List[int],
         window_size: List[int],
         in_channels = 16,
-        out_channels = 256,
         mlp_ratio: float = 4.0,
         dropout: float = 0.0,
         attention_dropout: float = 0.0,
         stochastic_depth_prob: float = 0.1,
         num_classes: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
-        block: Optional[Callable[..., nn.Module]] = SwinTransformerBlockV2,
-        downsample_layer: Callable[..., nn.Module] = PatchMerging,
-
-
-
-
+        block: Optional[Callable[..., nn.Module]] = None,
+        downsample_layer: Callable[..., nn.Module] = PatchMergingV2,
     ):
         super().__init__()
         _log_api_usage_once(self)
         self.num_classes = num_classes
-        self.pvt_out_channels = [64, 128, 256, 512]
-        #self.transposed_conv = nn.ModuleList([
-                        #nn.ConvTranspose2d(out_channels, out_channels, kernel_size=2, stride=2)
-                        #for out_channels in  self.pvt_out_channels])
-        self.transposed_conv = nn.ModuleList([
-                            nn.ConvTranspose2d(in_channels=embed_dim, out_channels=out_channels, kernel_size=2, stride=2),
-                            nn.ConvTranspose2d(in_channels=out_channels, out_channels=out_channels, kernel_size=2, stride=2)
-                        ])
+        self.embed_dim = embed_dim
+
+        #self.initial_conv = nn.Conv2d(in_channels, embed_dim, kernel_size=1, stride=1, padding=0)
+
+        self.transposed_conv = nn.ModuleList([nn.ConvTranspose2d(embed_dim * 2 ** i, embed_dim * 2 ** (i + 1), kernel_size=3, stride=2, padding=1, output_padding=1) for i in range(len(depths) - 1)])
 
         if block is None:
             block = SwinTransformerBlock
@@ -575,10 +570,8 @@ class SwinTransformer(nn.Module):
 
 
 
-
         total_stage_blocks = sum(depths)
         stage_block_id = 0
-
         # build SwinTransformer blocks
         for i_stage in range(len(depths)):
             stage: List[nn.Module] = []
@@ -602,22 +595,20 @@ class SwinTransformer(nn.Module):
                 stage_block_id += 1
             layers.append(nn.Sequential(*stage))
 
-            # add transposed convolution layer
-            if i_stage < (len(depths) - 1):
-                self.transposed_conv.append(
-                    nn.ConvTranspose2d(dim, dim, kernel_size=3, stride=2, padding=1, output_padding=1))
-
 
             # add patch merging layer
-            #if i_stage < (len(depths) - 1):
-                #layers.append(downsample_layer(dim, norm_layer))
+            if i_stage < (len(depths) - 1):
+                layers.append(downsample_layer(dim, norm_layer))
 
 
         self.features = nn.Sequential(*layers)
 
         num_features = embed_dim * 2 ** (len(depths) - 1)
         self.norm = norm_layer(num_features)
+
+        self.permute_init = Permute([0, 2, 3, 1])
         self.permute = Permute([0, 3, 1, 2])  # B H W C -> B C H W
+
 
         self.head = nn.Sequential(
             nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
@@ -625,8 +616,7 @@ class SwinTransformer(nn.Module):
             nn.Conv2d(num_features, num_classes, kernel_size=1)
         )
 
-
-        #self.head = nn.Conv2d(num_features, num_classes, kernel_size=1)
+        #self.head = nn.Linear(num_features, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -634,33 +624,34 @@ class SwinTransformer(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
+
     def forward(self, x):
-        """
-            Args:
-                x: Tensor of shape (B, C, H, W)
-
-            Returns:
-                output: Tensor of shape (B, 1, H, W)
-            """
-        outputs = []
-
-        # Pass through each feature block and transposed convolution
+        #print('initial', x.shape)
+        x = nn.Conv2d(x.shape[1], self.embed_dim, kernel_size=1, stride=1, padding=0)(x)
+        #print('after conv', x.shape)
+        x = self.permute_init(x)
+        #x = self.features(x)
         for i in range(len(self.features)):
             x = self.features[i](x)
-            print(x.shape)
-            if i < len(self.transposed_conv):
-                x = self.transposed_conv[i](x)
-            outputs.append(x)
+            #print(i, x.shape)
 
-        # Concatenate the outputs along the channel dimension
-        x = torch.cat(outputs, dim=1)
 
-        # Pass through the final layers
+
         x = self.norm(x)
         x = self.permute(x)
-        x = self.head(x)
-
+        #x = self.avgpool(x)
+        #x = self.flatten(x)
+        #print('before head', x.shape)
+        #x = self.head(x)
+        #print('after head', x.shape)
         return x
+
+
+
+
+
+
+
 
 
 def _swin_transformer(
