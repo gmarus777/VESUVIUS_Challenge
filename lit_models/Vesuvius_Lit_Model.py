@@ -13,6 +13,7 @@ from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 import segmentation_models_pytorch as smp
 import torch.nn.functional as F
+from lit_models.Loss_functions import ComboBCEDiceLoss, TverskyLoss
 
 try:
     import wandb
@@ -21,6 +22,9 @@ except ModuleNotFoundError:
 
 # ssl solution
 import ssl
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -59,20 +63,18 @@ class Lit_Model(pl.LightningModule):
         #self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(2))
 
         # SMP loss functions
-        self.loss_dice = smp.losses.DiceLoss(mode='binary',
-                                             log_loss=False,
-                                             # smooth=0.1,
-
-                                             )
+        #self.loss_dice = smp.losses.DiceLoss(mode='binary',
+        #                                     log_loss=False,
+         #                                    # smooth=0.1, )
 
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
                                                    log_loss=False,
-                                                   from_logits=False,
+                                                   from_logits=True,
                                                    alpha=0.7,
                                                    beta=0.3,
-                                                   gamma=2.0,
-                                                   smooth=0,
+                                                   gamma=1.0,
+                                                   smooth=1e-05,
                                                    ignore_index=None,
                                                    eps=1e-06,
                                                    )
@@ -108,11 +110,28 @@ class Lit_Model(pl.LightningModule):
                                                                )
 
 
+        #self.loss_tversky_monai = monai.losses.TverskyLoss(include_background=True,
+        #                                                   to_onehot_y=False,
+         #                                                  sigmoid=True,
+           #                                                softmax=False,
+            #                                               other_act=None,
+             #                                              alpha=0.5,
+              #                                             beta=0.5,
+               #                                            #reduction=LossReduction.MEAN,
+                #                                           smooth_nr=1e-04,
+                 #                                          smooth_dr=1e-04,
+                  #                                         batch=True)
+
+
+        #self.loss_tversky_custom = TverskyLoss( alpha=0.5, beta=0.5, eps=1e-7,).to(DEVICE)
+
+
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        return self.loss_bce(y_pred , y_true.float())  #+  self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  +  self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
+        #return self.loss_bce(y_pred , y_true.float()) + self.loss_tversky_monai(y_pred , y_true.float())
 
 
     def _init_model(self):
