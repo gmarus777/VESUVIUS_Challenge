@@ -347,8 +347,7 @@ class PyramidVisionTransformerV2(nn.Module):
             if m.bias is not None:
                 m.bias.data.zero_()
 
-    def init_weights(self, pretrained=None):
-        pass
+
 
 
     def freeze_patch_emb(self):
