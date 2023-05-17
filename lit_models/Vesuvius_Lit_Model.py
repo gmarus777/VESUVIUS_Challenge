@@ -69,9 +69,9 @@ class Lit_Model(pl.LightningModule):
                                                    classes=None,
                                                    log_loss=False,
                                                    from_logits=False,
-                                                   alpha=0.5,
-                                                   beta=0.5,
-                                                   gamma=2.0,
+                                                   alpha=0.7,
+                                                   beta=0.3,
+                                                   gamma=1.0,
                                                    smooth=0,
                                                    ignore_index=None,
                                                    eps=1e-06,
@@ -85,7 +85,7 @@ class Lit_Model(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss( smooth_factor=0.1, pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
