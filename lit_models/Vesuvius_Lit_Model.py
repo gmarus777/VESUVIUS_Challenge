@@ -74,7 +74,7 @@ class Lit_Model(pl.LightningModule):
                                                    gamma=2.0,
                                                    smooth=0,
                                                    ignore_index=None,
-                                                   eps=1e-07,
+                                                   eps=1e-06,
                                                    )
 
         self.loss_focal = smp.losses.FocalLoss(mode='binary',
@@ -85,7 +85,7 @@ class Lit_Model(pl.LightningModule):
                                                normalized=False,
                                                reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss( pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(  pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -184,8 +184,8 @@ class Lit_Model(pl.LightningModule):
 
 
         # Monitor BCE and Dice loss
-        bce = self.loss_bce(outputs , labels)
-        dice = self.loss_tversky(outputs, labels)
+        bce = self.loss_bce(outputs , labels.float())
+        dice = self.loss_tversky(outputs, labels.float())
 
 
         # SMP METRICS
