@@ -73,10 +73,10 @@ class Lit_Model(pl.LightningModule):
                                                    from_logits=True,
                                                    alpha=0.7,
                                                    beta=0.3,
-                                                   gamma=1.0,
-                                                   smooth=1e-03,
+                                                   gamma=2.0,
+                                                   smooth=1e-05,
                                                    ignore_index=None,
-                                                   eps=1e-03,
+                                                   eps=1e-05,
                                                    )
 
         self.loss_focal = smp.losses.FocalLoss(mode='binary',
