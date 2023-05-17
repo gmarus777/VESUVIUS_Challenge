@@ -285,7 +285,8 @@ class PyramidVisionTransformerV2(nn.Module):
 
     def reset_classifier(self, num_classes, global_pool=''):
         self.num_classes = num_classes
-        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        #self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        self.head = nn.Identity()
 
     def forward_features(self, x):
         B = x.shape[0]
@@ -305,10 +306,10 @@ class PyramidVisionTransformerV2(nn.Module):
         return outs
 
     def forward(self, x):
-        x = self.forward_features(x)
+        out = self.forward_features(x)
         # x = self.head(x)
 
-        return x
+        return [x] + out
 
 
 class DWConv(nn.Module):

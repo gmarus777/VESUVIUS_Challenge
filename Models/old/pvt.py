@@ -6,9 +6,9 @@ from functools import partial
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 from timm.models.vision_transformer import _cfg
-from mmseg.models.builder import BACKBONES
-from mmseg.utils import get_root_logger
-from mmcv.runner import load_checkpoint
+#from mmseg.models.builder import BACKBONES
+#from mmseg.utils import get_root_logger
+#from mmcv.runner import load_checkpoint
 
 
 class Mlp(nn.Module):
@@ -194,9 +194,7 @@ class PyramidVisionTransformer(nn.Module):
         self.apply(self._init_weights)
 
     def init_weights(self, pretrained=None):
-        if isinstance(pretrained, str):
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, map_location='cpu', strict=False, logger=logger)
+        pass
 
     def reset_drop_path(self, drop_path_rate):
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(self.depths))]
@@ -300,7 +298,7 @@ def _conv_filter(state_dict, patch_size=16):
     return out_dict
 
 
-@BACKBONES.register_module()
+
 class pvt_tiny(PyramidVisionTransformer):
     def __init__(self, **kwargs):
         super(pvt_tiny, self).__init__(
@@ -309,7 +307,7 @@ class pvt_tiny(PyramidVisionTransformer):
             sr_ratios=[8, 4, 2, 1], drop_rate=0.0, drop_path_rate=0.1)
 
 
-@BACKBONES.register_module()
+
 class pvt_small(PyramidVisionTransformer):
     def __init__(self, **kwargs):
         super(pvt_small, self).__init__(
@@ -318,7 +316,7 @@ class pvt_small(PyramidVisionTransformer):
             sr_ratios=[8, 4, 2, 1], drop_rate=0.0, drop_path_rate=0.1)
 
 
-@BACKBONES.register_module()
+
 class pvt_medium(PyramidVisionTransformer):
     def __init__(self, **kwargs):
         super(pvt_medium, self).__init__(
@@ -327,7 +325,7 @@ class pvt_medium(PyramidVisionTransformer):
             sr_ratios=[8, 4, 2, 1], drop_rate=0.0, drop_path_rate=0.1)
 
 
-@BACKBONES.register_module()
+
 class pvt_large(PyramidVisionTransformer):
     def __init__(self, **kwargs):
         super(pvt_large, self).__init__(
