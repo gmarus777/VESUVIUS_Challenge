@@ -67,7 +67,7 @@ class Lit_Model(pl.LightningModule):
 
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
-                                                   log_loss=False,
+                                                   log_loss=True,
                                                    from_logits=True,
                                                    alpha=0.7,
                                                    beta=0.3,
