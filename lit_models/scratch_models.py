@@ -11,7 +11,7 @@ class Conv3x3GNReLU(nn.Module):
         self.downsample_4x = nn.MaxPool2d(kernel_size=4, stride=4)
         self.block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, (3, 3), stride=1, padding=1, bias=False),
-            nn.GroupNorm(in_channels, out_channels, eps=1e-03),
+            nn.GroupNorm(out_channels, eps=1e-03),
             #torch.nn.SyncBatchNorm(out_channels, eps=1e-03, momentum=0.1),
             nn.ReLU(inplace=True),
         )
