@@ -11,8 +11,8 @@ class Conv3x3GNReLU(nn.Module):
         self.downsample_4x = nn.MaxPool2d(kernel_size=4, stride=4)
         self.block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, (3, 3), stride=1, padding=1, bias=False),
-            nn.GroupNorm(32, out_channels, eps=1e-03),
-            #torch.nn.SyncBatchNorm(out_channels, eps=1e-03, momentum=0.1),
+            #nn.GroupNorm(32, out_channels, eps=1e-03),
+            torch.nn.SyncBatchNorm(out_channels, eps=1e-03, momentum=0.1),
             nn.ReLU(inplace=True),
         )
 
@@ -121,8 +121,8 @@ class FPNDecoder(nn.Module):
         self.conv_fuse = nn.Sequential(
                     nn.ConvTranspose2d(
                         segmentation_channels*5, segmentation_channels, kernel_size=1, stride=1),
-                    #torch.nn.SyncBatchNorm(segmentation_channels, eps=1e-03, momentum=0.1),
-                    nn.GroupNorm(32, segmentation_channels, eps=1e-03),
+                    torch.nn.SyncBatchNorm(segmentation_channels, eps=1e-03, momentum=0.1),
+                    #nn.GroupNorm(32, segmentation_channels, eps=1e-03),
                     nn.GELU(),
                     nn.ConvTranspose2d(
                         segmentation_channels, segmentation_channels, kernel_size=1, stride=1),
