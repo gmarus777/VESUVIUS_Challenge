@@ -147,7 +147,7 @@ class Attention(nn.Module):
         self.q = nn.Linear(dim, dim, bias=qkv_bias)
         self.kv = nn.Linear(dim, dim * 2, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim)
+        self.proj = nn.Linear(dim, dim).to(DEVICE)
         self.proj_drop = nn.Dropout(proj_drop)
 
         self.linear = linear
@@ -155,11 +155,11 @@ class Attention(nn.Module):
         if not linear:
             if sr_ratio > 1:
                 self.sr = nn.Conv2d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio)
-                self.norm = nn.LayerNorm(dim)
+                self.norm = nn.LayerNorm(dim, eps=1e-03)
         else:
             self.pool = nn.AdaptiveAvgPool2d(7)
             self.sr = nn.Conv2d(dim, dim, kernel_size=1, stride=1)
-            self.norm = nn.LayerNorm(dim)
+            self.norm = nn.LayerNorm(dim, eps=1e-03)
             self.act = nn.GELU()
         self.apply(self._init_weights)
 
