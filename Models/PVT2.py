@@ -12,6 +12,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
 ############## UNET UPSCALING PART #############
 
@@ -263,8 +264,7 @@ class OverlapPatchEmbed(nn.Module):
         self.patch_size = patch_size
         self.H, self.W = img_size[0] // stride, img_size[1] // stride
         self.num_patches = self.H * self.W
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=stride,
-                              padding=(patch_size[0] // 2, patch_size[1] // 2))
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=stride, padding=(patch_size[0] // 2, patch_size[1] // 2))
         self.norm = nn.LayerNorm(embed_dim)
 
         self.apply(self._init_weights)
@@ -311,7 +311,7 @@ class PyramidVisionTransformerV2(nn.Module):
 
         for i in range(num_stages):
             patch_embed = OverlapPatchEmbed(img_size=img_size if i == 0 else img_size // (2 ** (i + 1)),
-                                            patch_size=8 if i == 0 else 4, # patch_size=7 if i == 0 else 3,
+                                            patch_size=7 if i == 0 else 3, # patch_size=7 if i == 0 else 3,
                                             stride=4 if i == 0 else 2,
                                             in_chans=in_chans if i == 0 else embed_dims[i - 1],
                                             embed_dim=embed_dims[i])
