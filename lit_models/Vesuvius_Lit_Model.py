@@ -116,9 +116,10 @@ class Lit_Model(pl.LightningModule):
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
+        #return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
+        return self.loss_bce(y_pred, y_true.float()) + 1 - self.dice_kaggle(y_pred, y_true.float())
 
 
     def _init_model(self):
@@ -192,6 +193,7 @@ class Lit_Model(pl.LightningModule):
         # Monitor BCE and Dice loss
         bce = self.loss_bce(outputs , labels.float())
         dice = self.loss_tversky(outputs, labels.float())
+        dice_kaggle = self.dice_kaggle(outputs, labels.float())
 
 
         # SMP METRICS
@@ -228,6 +230,7 @@ class Lit_Model(pl.LightningModule):
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE loss", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE loss", dice, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("DICE kaggle", dice_kaggle, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy with 0.5", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
 
         self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
