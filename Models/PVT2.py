@@ -269,6 +269,8 @@ class OverlapPatchEmbed(nn.Module):
 
         self.apply(self._init_weights)
 
+        self._init_weights()
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
