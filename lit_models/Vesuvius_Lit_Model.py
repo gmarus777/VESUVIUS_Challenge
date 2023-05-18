@@ -23,7 +23,7 @@ except ModuleNotFoundError:
 # ssl solution
 import ssl
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
+#DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
