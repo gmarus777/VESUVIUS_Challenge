@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 class Conv3x3GNReLU(nn.Module):
     def __init__(self, in_channels, out_channels, upsample=False, downsample =False):
         super().__init__()
@@ -104,11 +106,11 @@ class FPNDecoder(nn.Module):
         encoder_channels = encoder_channels[::-1]
         encoder_channels = encoder_channels[: encoder_depth + 1]
 
-        self.p5 = nn.Conv2d(encoder_channels[0], pyramid_channels, kernel_size=1)
-        self.p4 = FPNBlock(pyramid_channels, encoder_channels[1])
-        self.p3 = FPNBlock(pyramid_channels, encoder_channels[2])
-        self.p2 = FPNBlock(pyramid_channels, encoder_channels[3])
-        self.p1 = nn.Conv2d(in_channels, pyramid_channels, kernel_size=1)
+        self.p5 = nn.Conv2d(encoder_channels[0], pyramid_channels, kernel_size=1).to(DEVICE)
+        self.p4 = FPNBlock(pyramid_channels, encoder_channels[1]).to(DEVICE)
+        self.p3 = FPNBlock(pyramid_channels, encoder_channels[2]).to(DEVICE)
+        self.p2 = FPNBlock(pyramid_channels, encoder_channels[3]).to(DEVICE)
+        self.p1 = nn.Conv2d(in_channels, pyramid_channels, kernel_size=1).to(DEVICE)
 
         self.seg_blocks = nn.ModuleList(
             [ SegmentationBlock(pyramid_channels, segmentation_channels, n_upsamples=n_upsamples) for n_upsamples in [5, 4, 3, 2] ]
@@ -116,7 +118,7 @@ class FPNDecoder(nn.Module):
 
         self.merge = MergeBlock(merge_policy)
         self.dropout = nn.Dropout2d(p=dropout, inplace=True)
-        self.block = Conv3x3GNReLU(pyramid_channels, segmentation_channels, upsample=False, downsample=False)
+        self.block = Conv3x3GNReLU(pyramid_channels, segmentation_channels, upsample=False, downsample=False).to(DEVICE)
 
         self.conv_fuse = nn.Sequential(
                     nn.ConvTranspose2d(
