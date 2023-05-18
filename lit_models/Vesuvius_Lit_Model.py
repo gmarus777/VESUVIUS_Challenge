@@ -79,35 +79,20 @@ class Lit_Model(pl.LightningModule):
                                                    eps=1e-05,
                                                    )
 
-        self.loss_focal = smp.losses.FocalLoss(mode='binary',
-                                               alpha=None,
-                                               gamma=2.0,
-                                               ignore_index=None,
-                                               reduction='mean',
-                                               normalized=False,
-                                               reduced_threshold=None)
+        #self.loss_focal = smp.losses.FocalLoss(mode='binary',
+         #                                      alpha=None,
+          #                                     gamma=2.0,
+           #                                    ignore_index=None,
+            #                                   reduction='mean',
+             #                                  normalized=False,
+              #                                 reduced_threshold=None)
 
         self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
 
-        self.loss_monai_focal_dice =monai.losses.DiceFocalLoss(include_background=True,
-                                                               to_onehot_y=False,
-                                                               sigmoid=True,
-                                                               softmax=False,
-                                                               other_act=None,
-                                                               squared_pred=False,
-                                                               jaccard=False,
-                                                               reduction='mean',
-                                                               smooth_nr=1e-05,
-                                                               smooth_dr=1e-05,
-                                                               batch=True,
-                                                               gamma=2.0,
-                                                               focal_weight=None,
-                                                               lambda_dice=1.0,
-                                                               lambda_focal=1.0
-                                                               )
+
 
 
         #self.loss_tversky_monai = monai.losses.TverskyLoss(include_background=True,
@@ -299,7 +284,25 @@ class Lit_Model(pl.LightningModule):
 
 
 
+'''
+self.loss_monai_focal_dice =monai.losses.DiceFocalLoss(include_background=True,
+                                                               to_onehot_y=False,
+                                                               sigmoid=True,
+                                                               softmax=False,
+                                                               other_act=None,
+                                                               squared_pred=False,
+                                                               jaccard=False,
+                                                               reduction='mean',
+                                                               smooth_nr=1e-05,
+                                                               smooth_dr=1e-05,
+                                                               batch=True,
+                                                               gamma=2.0,
+                                                               focal_weight=None,
+                                                               lambda_dice=1.0,
+                                                               lambda_focal=1.0
+                                                               )
 
+'''
 
 
 
