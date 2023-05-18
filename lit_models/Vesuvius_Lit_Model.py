@@ -70,9 +70,9 @@ class Lit_Model(pl.LightningModule):
         self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
                                                    classes=None,
                                                    log_loss=False,
-                                                   from_logits=True,
-                                                   alpha=0.5,
-                                                   beta=0.5,
+                                                   from_logits=False,
+                                                   alpha=0.6,
+                                                   beta=0.4,
                                                    gamma=2.0,
                                                    smooth=1e-05,
                                                    ignore_index=None,
@@ -129,9 +129,9 @@ class Lit_Model(pl.LightningModule):
 
     def _init_loss(self, y_pred, y_true):
         #return self.loss_bce(y_pred , y_true.float()) + 0.5*self.loss_monai_focal_dice(y_pred , y_true.float() )
-        #return self.loss_bce(y_pred , y_true.float())  +  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  +  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
-        return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
+        #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
 
 
     def _init_model(self):
