@@ -147,7 +147,7 @@ class Attention(nn.Module):
         self.q = nn.Linear(dim, dim, bias=qkv_bias)
         self.kv = nn.Linear(dim, dim * 2, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim).to(DEVICE)
+        self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
         self.linear = linear
@@ -155,11 +155,11 @@ class Attention(nn.Module):
         if not linear:
             if sr_ratio > 1:
                 self.sr = nn.Conv2d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio)
-                self.norm = nn.LayerNorm(dim, eps=1e-03)
+                self.norm = nn.LayerNorm(dim) #eps=1e-03
         else:
             self.pool = nn.AdaptiveAvgPool2d(7)
             self.sr = nn.Conv2d(dim, dim, kernel_size=1, stride=1)
-            self.norm = nn.LayerNorm(dim, eps=1e-03)
+            self.norm = nn.LayerNorm(dim) #eps=1e-03
             self.act = nn.GELU()
         self.apply(self._init_weights)
 
@@ -214,14 +214,14 @@ class Block(nn.Module):
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, sr_ratio=1, linear=False):
         super().__init__()
-        self.norm1 = norm_layer(dim, eps=1e-03)
+        self.norm1 = norm_layer(dim) # eps=1e-03
         self.attn = Attention(
             dim,
             num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
             attn_drop=attn_drop, proj_drop=drop, sr_ratio=sr_ratio, linear=linear)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-        self.norm2 = norm_layer(dim, eps=1e-03)
+        self.norm2 = norm_layer(dim) # eps=1e-03
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop, linear=linear)
 
@@ -265,7 +265,7 @@ class OverlapPatchEmbed(nn.Module):
         self.H, self.W = img_size[0] // stride, img_size[1] // stride
         self.num_patches = self.H * self.W
         self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=stride, padding=(patch_size[0] // 2, patch_size[1] // 2)).to(DEVICE)
-        self.norm = nn.LayerNorm(embed_dim, eps=1e-03)
+        self.norm = nn.LayerNorm(embed_dim)
 
         self.apply(self._init_weights)
 
@@ -322,7 +322,8 @@ class PyramidVisionTransformerV2(nn.Module):
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + j], norm_layer=norm_layer,
                 sr_ratio=sr_ratios[i], linear=linear)
                 for j in range(depths[i])])
-            norm = norm_layer(embed_dims[i], eps=1e-03)
+            norm = norm_layer(embed_dims[i]) #             norm = norm_layer(embed_dims[i]) #
+
             cur += depths[i]
 
             setattr(self, f"patch_embed{i + 1}", patch_embed)
