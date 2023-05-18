@@ -99,7 +99,7 @@ class FPNDecoder(nn.Module):
         self.dropout = nn.Dropout2d(p=dropout, inplace=True)
 
     def forward(self, features):
-        print(len(features))
+
         c2, c3, c4, c5 = features[-4:]
 
         p5 = self.p5(c5)
