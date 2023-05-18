@@ -255,8 +255,8 @@ class OverlapPatchEmbed(nn.Module):
 
     def __init__(self, img_size=256, patch_size=7, stride=4, in_chans=3, embed_dim=768):
         super().__init__()
-        img_size = (img_size, img_size)#to_2tuple(img_size)
-        patch_size = (patch_size,patch_size) #to_2tuple(patch_size)
+        img_size = to_2tuple(img_size)
+        patch_size = to_2tuple(patch_size)
 
         assert max(patch_size) > stride, "Set larger patch_size than stride"
 
@@ -322,7 +322,7 @@ class PyramidVisionTransformerV2(nn.Module):
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + j], norm_layer=norm_layer,
                 sr_ratio=sr_ratios[i], linear=linear)
                 for j in range(depths[i])])
-            norm = norm_layer(embed_dims[i])
+            norm = norm_layer(embed_dims[i], eps=1e-03)
             cur += depths[i]
 
             setattr(self, f"patch_embed{i + 1}", patch_embed)
