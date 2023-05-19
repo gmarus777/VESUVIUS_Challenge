@@ -251,6 +251,7 @@ class Lit_Model(pl.LightningModule):
             wandb.log({"FBETA": fbeta.item()})
             wandb.log({"BCE": bce})
             wandb.log({"DICE": dice.item()})
+            wandb.log({"DICE kaggle": dice_kaggle.item()})
             wandb.log({"accuracy_simple": accuracy_simple})
             wandb.log({"fbeta_1": fbeta_1})
             wandb.log({"fbeta_4": fbeta_4})
