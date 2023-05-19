@@ -119,7 +119,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
-        return self.loss_bce(y_pred, y_true.float()) - torch.log(self.dice_kaggle(y_pred, y_true.float()))
+        return self.loss_bce(y_pred, y_true.float()) + self.dice_kaggle(y_pred, y_true.float()) #torch.log(self.dice_kaggle(y_pred, y_true.float()))
 
 
     def _init_model(self):
@@ -275,7 +275,7 @@ def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
     c_recall = ctp / (y_true_count + smooth)
     dice = (1 + beta_squared) * (c_precision * c_recall+smooth) / (beta_squared * c_precision + c_recall + smooth)
 
-    return dice
+    return 1 - dice
 
 
 
