@@ -69,17 +69,7 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
-                                                   classes=None,
-                                                   log_loss=False,
-                                                   from_logits=False,
-                                                   alpha=0.6,
-                                                   beta=0.4,
-                                                   gamma=2.0,
-                                                   smooth=1e-05,
-                                                   ignore_index=None,
-                                                   eps=1e-05,
-                                                   )
+
 
         #self.loss_focal = smp.losses.FocalLoss(mode='binary',
          #                                      alpha=None,
@@ -325,6 +315,21 @@ self.loss_monai_focal_dice =monai.losses.DiceFocalLoss(include_background=True,
                                                                lambda_dice=1.0,
                                                                lambda_focal=1.0
                                                                )
+                                                               
+                                                               
+                                                               
+                                                               
+    self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
+                                                   classes=None,
+                                                   log_loss=False,
+                                                   from_logits=False,
+                                                   alpha=0.6,
+                                                   beta=0.4,
+                                                   gamma=2.0,
+                                                   smooth=1e-05,
+                                                   ignore_index=None,
+                                                   eps=1e-05,
+                                                   )
 
 '''
 
