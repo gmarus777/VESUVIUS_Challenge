@@ -63,7 +63,7 @@ class Lit_Model(pl.LightningModule):
         #### LOSS Functions ###
         self.dice_kaggle = dice_coef_torch
 
-        self.dice_new = SoftDiceLossV2()
+        self.dice_new = SoftDiceLossV1()
 
         # Torch loss functions
         #self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(2))
@@ -260,14 +260,14 @@ class Lit_Model(pl.LightningModule):
 
 
 
-class SoftDiceLossV2(nn.Module):
+class SoftDiceLossV1(nn.Module):
     '''
     soft-dice loss, useful in binary segmentation
     '''
     def __init__(self,
                  p=1,
                  smooth=1):
-        super(SoftDiceLossV2, self).__init__()
+        super(SoftDiceLossV1, self).__init__()
         self.p = p
         self.smooth = smooth
 
@@ -279,33 +279,10 @@ class SoftDiceLossV2(nn.Module):
         output:
             loss: tensor of shape(1, )
         '''
-        logits = logits.view(1, -1)
-        labels = labels.view(1, -1)
-        loss = SoftDiceLossV2Func.apply(logits, labels, self.p, self.smooth)
-        return loss
-
-class SoftDiceLossV2Func(torch.autograd.Function):
-    '''
-    compute backward directly for better numeric stability
-    '''
-    @staticmethod
-    @amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(ctx, logits, labels, p, smooth):
-        '''
-        inputs:
-            logits: (N, L)
-            labels: (N, L)
-        outpus:
-            loss: (N,)
-        '''
-        #  logits = logits.float()
-
         probs = torch.sigmoid(logits)
-        numer = 2 * (probs * labels).sum(dim=1) + smooth
-        denor = (probs.pow(p) + labels.pow(p)).sum(dim=1) + smooth
-        loss = 1. - numer / denor
-
-        ctx.vars = probs, labels, numer, denor, p, smooth
+        numer = (probs * labels).sum()
+        denor = (probs.pow(self.p) + labels.pow(self.p)).sum()
+        loss = 1. - (2 * numer + self.smooth) / (denor + self.smooth)
         return loss
 
 class DiceBCELoss(nn.Module):
