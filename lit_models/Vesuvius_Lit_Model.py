@@ -93,7 +93,22 @@ class Lit_Model(pl.LightningModule):
 
 
         # MONAI loss functions
-
+        self.loss_monai_focal_dice = monai.losses.DiceFocalLoss(include_background=True,
+                                                                to_onehot_y=False,
+                                                                sigmoid=True,
+                                                                softmax=False,
+                                                                other_act=None,
+                                                                squared_pred=False,
+                                                                jaccard=False,
+                                                                reduction='mean',
+                                                                smooth_nr=1e-03,
+                                                                smooth_dr=1e-03,
+                                                                batch=True,
+                                                                gamma=2.0,
+                                                                focal_weight=None,
+                                                                lambda_dice=0.5,
+                                                                lambda_focal=0.5
+                                                                )
 
 
 
@@ -119,7 +134,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
-        return self.loss_bce(y_pred, y_true.float()) + self.dice_kaggle(y_pred, y_true.float()) #torch.log(self.dice_kaggle(y_pred, y_true.float()))
+        return self.loss_bce(y_pred, y_true.float()) + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
 
 
     def _init_model(self):
