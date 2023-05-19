@@ -71,7 +71,7 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = smp.LovaszLoss(mode='binary', per_image=False, ignore_index=None, from_logits=True)
+        self.loss_tversky = smp.losses.LovaszLoss(mode='binary', per_image=False, ignore_index=None, from_logits=True)
 
             #smp.losses.TverskyLoss(mode='binary',
              #                                      classes=None,
