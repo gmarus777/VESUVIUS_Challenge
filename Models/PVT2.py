@@ -159,7 +159,7 @@ class Attention(nn.Module):
         else:
             self.pool = nn.AdaptiveAvgPool2d(7)
             self.sr = nn.Conv2d(dim, dim, kernel_size=1, stride=1)
-            self.norm = nn.LayerNorm(dim) #eps=1e-03
+            self.norm = nn.LayerNorm(dim, eps=1e-04) #eps=1e-03
             self.act = nn.GELU()
         self.apply(self._init_weights)
 
