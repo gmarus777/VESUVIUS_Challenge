@@ -134,7 +134,7 @@ class FPNDecoder(nn.Module):
         self.linear_pred = nn.Sequential(
                                     nn.Conv2d(segmentation_channels, 1, kernel_size=1),
                                     #nn.GroupNorm(32, out_channels, eps=1e-03),
-                                    torch.nn.SyncBatchNorm(1, eps=1e-03, momentum=0.1),
+                                    nn.LayerNorm(1, eps=1e-03),
                                     nn.ReLU(inplace=True))
 
 
