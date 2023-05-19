@@ -500,7 +500,7 @@ class PVT_seg(nn.Module):
                                               drop_rate=0.,
                                               attn_drop_rate=0.,
                                               drop_path_rate=0.1,
-                                              norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                                              norm_layer=partial(nn.LayerNorm, eps=1e-5),
                                               depths=[3, 4, 6, 3],
                                               sr_ratios=[8, 4, 2, 1]
                                               )
