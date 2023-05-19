@@ -61,6 +61,8 @@ class Lit_Model(pl.LightningModule):
         #### LOSS Functions ###
         self.dice_kaggle = dice_coef_torch
 
+        self.dice_bce = DiceBCELoss()
+
         # Torch loss functions
         #self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(2))
 
@@ -118,8 +120,8 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
-        return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
-
+        #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
+        return self.dice_bce(y_pred, y_true.float())
 
     def _init_model(self):
         return self.cfg.model
@@ -253,7 +255,29 @@ class Lit_Model(pl.LightningModule):
         return [optimizer], [scheduler]
 
 
+class DiceBCELoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(DiceBCELoss, self).__init__()
+        self.bce =  torch.nn.BCEWithLogitsLoss(weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=torch.tensor(0.5))#torch.tensor(0.5)
 
+    def forward(self, inputs, targets, smooth=1):
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        BCE =  self.bce(inputs)
+
+        inputs = torch.sigmoid(inputs)
+
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        intersection = (inputs * targets).sum()
+        dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+        #BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
+
+        Dice_BCE = BCE + dice_loss
+
+        return Dice_BCE
 
 
 def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
@@ -274,7 +298,7 @@ def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
     c_recall = ctp / (y_true_count + smooth)
     dice = (1 + beta_squared) * (c_precision * c_recall+smooth) / (beta_squared * c_precision + c_recall + smooth)
 
-    return 1 - dice
+    return dice
 
 
 

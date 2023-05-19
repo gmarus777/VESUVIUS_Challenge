@@ -1,11 +1,7 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from functools import partial
+
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-from timm.models.registry import register_model
-from timm.models.vision_transformer import _cfg
+
 import math
 
 
@@ -14,78 +10,95 @@ import torch.nn as nn
 import torch.nn.functional as F
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
-############## UNET UPSCALING PART #############
 
+######## SEG HEAD
 
-class DoubleConv(nn.Module):
-    """(convolution => [BN] => ReLU) * 2"""
+class MLP(nn.Module):
+    """
+    Linear Embedding
+    """
 
-    def __init__(self, in_channels, out_channels, mid_channels=None):
+    def __init__(self, input_dim=2048, embed_dim=768):
         super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(mid_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        )
+        self.proj = nn.Linear(input_dim, embed_dim)
 
     def forward(self, x):
-        return self.double_conv(x)
-
-
-class Up(nn.Module):
-    """Upscaling then double conv"""
-
-    def __init__(self, in_channels, out_channels, bilinear=False, last_layer =False):
-        super().__init__()
-
-        # if bilinear, use the normal convolutions to reduce the number of channels
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
-
-        elif last_layer:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels // 2 + out_channels, out_channels)
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels, out_channels)
-
-    def forward(self, x1, x2):
-        x1 = self.up(x1)
-        # input is CHW
-        diffY = x2.size()[2] - x1.size()[2]
-        diffX = x2.size()[3] - x1.size()[3]
-
-
-
-        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
-                        diffY // 2, diffY - diffY // 2])
-
-
-        # if you have padding issues, see
-        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
-        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
-        x = torch.cat([x2, x1], dim=1)
-        x = self.conv(x)
+        x = x.flatten(2).transpose(1, 2)
+        x = self.proj(x)
         return x
 
 
+class SegFormerHead(nn.Module):
+    """
+    SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers
+    """
 
-class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+    def __init__(self, z_dim, in_channels, embedding_dim, dropout=0, feature_strides=None, **kwargs):
+        super().__init__()
+        self.in_channels = in_channels
+        self.feature_strides = feature_strides
+        self.num_classes = 1
+        self.dropout = dropout
 
-    def forward(self, x):
-        return self.conv(x)
+        # decoder_params = kwargs['decoder_params']
+        self.embedding_dim = embedding_dim
+
+        self.linear_c4 = MLP(input_dim=self.in_channels[-1], embed_dim=self.embedding_dim)
+        self.linear_c3 = MLP(input_dim=self.in_channels[-2], embed_dim=self.embedding_dim)
+        self.linear_c2 = MLP(input_dim=self.in_channels[-3], embed_dim=self.embedding_dim)
+        self.linear_c1 = MLP(input_dim=self.in_channels[-4], embed_dim=self.embedding_dim)
+        self.linear_c0 = MLP(input_dim=z_dim, embed_dim=self.embedding_dim)
+
+        self.conv_fuse = nn.Sequential(
+            nn.ConvTranspose2d(
+                embedding_dim * 5, embedding_dim, kernel_size=1, stride=1),
+            torch.nn.SyncBatchNorm(embedding_dim, eps=1e-04, momentum=0.1),
+            # nn.GroupNorm(32, segmentation_channels, eps=1e-03),
+            nn.GELU(),
+            nn.ConvTranspose2d(
+                embedding_dim, embedding_dim, kernel_size=1, stride=1),
+        ).to(DEVICE)
+
+        self.linear_pred = nn.Conv2d(embedding_dim, self.num_classes, kernel_size=1)
+        self.dropout = nn.Dropout2d(p=self.dropout, inplace=True)
+
+    def forward(self, *features):
+        # x = self._transform_inputs(inputs)  # len=4, 1/4,1/8,1/16,1/32
+        c0, c1, c2, c3, c4, = features
 
 
 
+        ############## MLP decoder on C1-C4 ###########
+        n, _, h, w = c4.shape
+
+        _c4 = self.linear_c4(c4).permute(0, 2, 1).reshape(n, -1, c4.shape[2], c4.shape[3])
+        # _c4 = resize(_c4, size=c1.size()[2:],mode='bilinear',align_corners=False)
+        _c4 = F.interpolate(_c4, size=c0.size()[2:], scale_factor=None, mode='bilinear', align_corners=False)
+
+        _c3 = self.linear_c3(c3).permute(0, 2, 1).reshape(n, -1, c3.shape[2], c3.shape[3])
+        # _c3 = resize(_c3, size=c1.size()[2:],mode='bilinear',align_corners=False)
+        _c3 = F.interpolate(_c3, size=c0.size()[2:], scale_factor=None, mode='bilinear', align_corners=False)
+
+        _c2 = self.linear_c2(c2).permute(0, 2, 1).reshape(n, -1, c2.shape[2], c2.shape[3])
+        # _c2 = resize(_c2, size=c1.size()[2:],mode='bilinear',align_corners=False)
+        _c2 = F.interpolate(_c2, size=c0.size()[2:], scale_factor=None, mode='bilinear', align_corners=False)
+
+        _c1 = self.linear_c1(c1).permute(0, 2, 1).reshape(n, -1, c1.shape[2], c1.shape[3])
+        _c1 = F.interpolate(_c1, size=c0.size()[2:], scale_factor=None, mode='bilinear', align_corners=False)
+
+        _c0 = self.linear_c0(c0).permute(0, 2, 1).reshape(n, -1, c0.shape[2], c0.shape[3])
+
+
+
+        cc = torch.cat([_c4, _c3, _c2, _c1, _c0], dim=1)
+
+
+        _c = self.conv_fuse(cc)
+
+        x = self.dropout(_c)
+        x = self.linear_pred(x)
+
+        return x
 
 
 ############# PVT part ###################
@@ -297,8 +310,8 @@ class OverlapPatchEmbed(nn.Module):
         return x, H, W
 
 
-class PyramidVisionTransformerV2(nn.Module):
-    def __init__(self, img_size=256, patch_size=16, in_chans=3, num_classes=1000, embed_dims=[64, 128, 256, 512],
+class PyramidVisionTransformerV2_MLP(nn.Module):
+    def __init__(self, img_size=256, mlp_dim=128, patch_size=16, in_chans=3, num_classes=1000, embed_dims=[64, 128, 256, 512],
                  num_heads=[1, 2, 4, 8], mlp_ratios=[4, 4, 4, 4], qkv_bias=False, qk_scale=None, drop_rate=0.,
                  attn_drop_rate=0., drop_path_rate=0., norm_layer=nn.LayerNorm, depths=[3, 4, 6, 3],
                  sr_ratios=[8, 4, 2, 1], num_stages=4, linear=False):
@@ -307,6 +320,7 @@ class PyramidVisionTransformerV2(nn.Module):
         self.depths = depths
         self.num_stages = num_stages
         self.linear = linear
+        self.mlp_head = SegFormerHead( z_dim = in_chans, in_channels =embed_dims , embedding_dim=mlp_dim )
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
         cur = 0
@@ -387,11 +401,18 @@ class PyramidVisionTransformerV2(nn.Module):
         return outs
 
     def forward(self, x):
-
+        pvt_outs = [x]
         outputs = self.forward_features(x)
         # x = self.head(x)
+        pvt_outs += outputs
+        final_out = self.mlp_head(*pvt_outs)
 
-        return [x] + outputs
+
+        return final_out
+
+
+
+
 
 
 class DWConv(nn.Module):
@@ -417,132 +438,6 @@ def _conv_filter(state_dict, patch_size=16):
         out_dict[k] = v
 
     return out_dict
-
-
-
-class pvt_v2_b0(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b0, self).__init__(
-            patch_size=4, embed_dims=[32, 64, 160, 256], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[2, 2, 2, 2], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-class pvt_v2_b1(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b1, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[2, 2, 2, 2], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-class pvt_v2_b2(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b2, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-class pvt_v2_b2_li(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b2_li, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1, linear=True)
-
-
-
-class pvt_v2_b3(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b3, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 18, 3], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-class pvt_v2_b4(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b4, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 8, 27, 3], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-class pvt_v2_b5(PyramidVisionTransformerV2):
-    def __init__(self, **kwargs):
-        super(pvt_v2_b5, self).__init__(
-            patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[4, 4, 4, 4],
-            qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 6, 40, 3], sr_ratios=[8, 4, 2, 1],
-            drop_rate=0.0, drop_path_rate=0.1)
-
-
-
-####### OLD PVT w Seg HEad
-
-class PVT_seg(nn.Module):
-    def __init__(self, img_size=256, in_channels=16, embed_dim=96):
-        super().__init__()
-
-        self.embed_dim = embed_dim
-        self.pvt = PyramidVisionTransformerV2(img_size=img_size,
-                                              patch_size=4,
-                                              in_chans=in_channels,
-                                              num_classes=1,
-                                              embed_dims=[32, 64, 128, 256],
-                                              num_heads=[1, 2, 4, 8],
-                                              mlp_ratios=[8, 8, 4, 4],
-                                              qkv_bias=True,
-                                              qk_scale=None,
-                                              drop_rate=0.,
-                                              attn_drop_rate=0.,
-                                              drop_path_rate=0.1,
-                                              norm_layer=partial(nn.LayerNorm, eps=1e-6),
-                                              depths=[3, 4, 6, 3],
-                                              sr_ratios=[8, 4, 2, 1]
-                                              )
-
-        self.head = SegmentationHead(in_channels_list=[16, 32, 64, 128, 256, ],
-                                     out_channels=1)  # math them with embed_dims + original channel first
-
-    def forward(self, x):
-        # pass through PVT
-        pvt_outs = self.pvt(x)  # outputs 5 tensors
-
-        final_outs = self.head(pvt_outs)
-
-        return final_outs
-
-
-class SegmentationHead(nn.Module):
-    def __init__(self, in_channels_list, out_channels):
-        super(SegmentationHead, self).__init__()
-        self.convs = nn.ModuleList([nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 1),
-            # nn.BatchNorm2d(out_channels),
-            nn.ReLU()
-        ) for in_channels in in_channels_list])
-        self.final_conv = nn.Sequential(
-            nn.Conv2d(len(in_channels_list) * out_channels, out_channels, 1),
-            # nn.BatchNorm2d(out_channels),
-            nn.ReLU()
-        )
-
-    def forward(self, features):
-        upsampled_features = [F.interpolate(feature, size=(256, 256), mode='bilinear', align_corners=False) for feature
-                              in features]
-        conv_features = [self.convs[i](feature) for i, feature in enumerate(upsampled_features)]
-        concatenated_features = torch.cat(conv_features, dim=1)
-        output = self.final_conv(concatenated_features)
-        return output
-
-
-
 
 
 
