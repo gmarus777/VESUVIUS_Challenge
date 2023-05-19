@@ -13,8 +13,8 @@ class Conv3x3GNReLU(nn.Module):
         self.downsample_4x = nn.MaxPool2d(kernel_size=4, stride=4)
         self.block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, (3, 3), stride=1, padding=1, bias=False),
-            #nn.GroupNorm(32, out_channels, eps=1e-03),
-            torch.nn.SyncBatchNorm(out_channels, eps=1e-03, momentum=0.1),
+            nn.GroupNorm(32, out_channels, eps=1e-05),
+            #torch.nn.SyncBatchNorm(out_channels, eps=1e-05, momentum=0.1),
             nn.ReLU(inplace=True),
         )
 
@@ -106,11 +106,11 @@ class FPNDecoder(nn.Module):
         encoder_channels = encoder_channels[::-1]
         encoder_channels = encoder_channels[: encoder_depth + 1]
 
-        self.p5 = nn.Conv2d(encoder_channels[0], pyramid_channels, kernel_size=1).to(DEVICE)
-        self.p4 = FPNBlock(pyramid_channels, encoder_channels[1]).to(DEVICE)
-        self.p3 = FPNBlock(pyramid_channels, encoder_channels[2]).to(DEVICE)
-        self.p2 = FPNBlock(pyramid_channels, encoder_channels[3]).to(DEVICE)
-        self.p1 = nn.Conv2d(in_channels, pyramid_channels, kernel_size=1).to(DEVICE)
+        self.p5 = nn.Conv2d(encoder_channels[0], pyramid_channels, kernel_size=1)
+        self.p4 = FPNBlock(pyramid_channels, encoder_channels[1])
+        self.p3 = FPNBlock(pyramid_channels, encoder_channels[2])
+        self.p2 = FPNBlock(pyramid_channels, encoder_channels[3])
+        self.p1 = nn.Conv2d(in_channels, pyramid_channels, kernel_size=1)
 
         self.seg_blocks = nn.ModuleList(
             [ SegmentationBlock(pyramid_channels, segmentation_channels, n_upsamples=n_upsamples) for n_upsamples in [5, 4, 3, 2] ]
@@ -123,8 +123,8 @@ class FPNDecoder(nn.Module):
         self.conv_fuse = nn.Sequential(
                     nn.ConvTranspose2d(
                         segmentation_channels*5, segmentation_channels, kernel_size=1, stride=1),
-                    torch.nn.SyncBatchNorm(segmentation_channels, eps=1e-03, momentum=0.1),
-                    #nn.GroupNorm(32, segmentation_channels, eps=1e-03),
+                    #torch.nn.SyncBatchNorm(segmentation_channels, eps=1e-05, momentum=0.1),
+                    nn.GroupNorm(32, segmentation_channels, eps=1e-03),
                     nn.GELU(),
                     nn.ConvTranspose2d(
                         segmentation_channels, segmentation_channels, kernel_size=1, stride=1),
@@ -152,7 +152,8 @@ class FPNDecoder(nn.Module):
 
         feature_pyramid += [f1]
 
-        x = self.merge(feature_pyramid)
+        #x = self.merge(feature_pyramid)
+        x =  torch.cat(feature_pyramid, dim=1)
         x = self.conv_fuse(x)
         x = self.dropout(x)
         x =  self.linear_pred(x)
