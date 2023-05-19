@@ -78,7 +78,7 @@ class Lit_Model(pl.LightningModule):
                                                    alpha=0.6,
                                                    beta=0.4,
                                                    gamma=2.0,
-                                                   smooth=1e-05,
+                                                   smooth=1e-03,
                                                    ignore_index=None,
                                                    eps=1e-03,
                                                    )
@@ -258,7 +258,7 @@ class Lit_Model(pl.LightningModule):
 class DiceBCELoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(DiceBCELoss, self).__init__()
-        self.bce =  torch.nn.BCEWithLogitsLoss(weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=torch.tensor(0.5))#torch.tensor(0.5)
+        self.bce =  torch.nn.BCEWithLogitsLoss(weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=None)#torch.tensor(0.5)
 
     def forward(self, inputs, targets, smooth=1):
         # comment out if your model contains a sigmoid or equivalent activation layer
@@ -296,7 +296,7 @@ def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
 
     c_precision = ctp / (ctp + cfp + smooth)
     c_recall = ctp / (y_true_count + smooth)
-    dice = (1 + beta_squared) * (c_precision * c_recall+smooth) / (beta_squared * c_precision + c_recall + smooth)
+    dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
 
     return dice
 
