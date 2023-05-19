@@ -89,7 +89,7 @@ class Lit_Model(pl.LightningModule):
              #                                  normalized=False,
               #                                 reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.75))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -119,7 +119,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float())  #+  0.5*self.loss_tversky(y_pred , y_true.float()) #+ 0.5*self.loss_focal(y_pred , y_true.float())
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
-        return self.loss_bce(y_pred, y_true.float()) - torch.log(self.dice_kaggle(y_pred, y_true.float()))
+        return self.loss_bce(y_pred, y_true.float()) #- torch.log(self.dice_kaggle(y_pred, y_true.float()))
 
 
     def _init_model(self):
