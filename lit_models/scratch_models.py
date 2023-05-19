@@ -15,7 +15,7 @@ class Conv3x3GNReLU(nn.Module):
             nn.Conv2d(in_channels, out_channels, (3, 3), stride=1, padding=1, bias=False),
             #nn.GroupNorm(32, out_channels, eps=1e-03),
             torch.nn.SyncBatchNorm(out_channels, eps=1e-03, momentum=0.1),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -130,12 +130,7 @@ class FPNDecoder(nn.Module):
                         segmentation_channels, segmentation_channels, kernel_size=1, stride=1),
                 ).to(DEVICE)
 
-        #self.linear_pred = nn.Conv2d(segmentation_channels, 1, kernel_size=1)
-        self.linear_pred = nn.Sequential(
-                                    nn.Conv2d(segmentation_channels, 1, kernel_size=1),
-                                    #nn.GroupNorm(32, out_channels, eps=1e-03),
-                                    #torch.nn.SyncBatchNorm(1, eps=1e-03, momentum=0.1),
-                                    nn.LeakyReLU(inplace=True))
+        self.linear_pred = nn.Conv2d(segmentation_channels, 1, kernel_size=1)
 
 
     def forward(self, *features):
@@ -162,7 +157,6 @@ class FPNDecoder(nn.Module):
         x = self.conv_fuse(x)
         x = self.dropout(x)
         x =  self.linear_pred(x)
-
 
 
         return x

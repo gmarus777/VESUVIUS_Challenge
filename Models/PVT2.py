@@ -27,10 +27,10 @@ class DoubleConv(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(mid_channels),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(inplace=True)
+            nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
@@ -103,7 +103,7 @@ class Mlp(nn.Module):
         self.linear = linear
 
         if self.linear:
-            self.relu = nn.LeakyReLU(inplace=True)
+            self.relu = nn.ReLU(inplace=True)
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -400,8 +400,6 @@ class DWConv(nn.Module):
         B, N, C = x.shape
         x = x.transpose(1, 2).view(B, C, H, W)
         x = self.dwconv(x)
-
-
         x = x.flatten(2).transpose(1, 2)
 
         return x
@@ -528,7 +526,7 @@ class SegmentationHead(nn.Module):
         ) for in_channels in in_channels_list])
         self.final_conv = nn.Sequential(
             nn.Conv2d(len(in_channels_list) * out_channels, out_channels, 1),
-            nn.BatchNorm2d(out_channels),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
 
