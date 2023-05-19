@@ -130,13 +130,12 @@ class FPNDecoder(nn.Module):
                         segmentation_channels, segmentation_channels, kernel_size=1, stride=1),
                 ).to(DEVICE)
 
+        #self.linear_pred = nn.Conv2d(segmentation_channels, 1, kernel_size=1)
         self.linear_pred = nn.Sequential(
-            nn.Conv2d(segmentation_channels, 1, kernel_size=1),
-            #nn.GroupNorm(32, out_channels, eps=1e-03),
-            torch.nn.SyncBatchNorm(segmentation_channels, eps=1e-03, momentum=0.1),
-            nn.ReLU(inplace=True),
-        )
-
+                                    nn.Conv2d(segmentation_channels, 1, kernel_size=1),
+                                    #nn.GroupNorm(32, out_channels, eps=1e-03),
+                                    torch.nn.SyncBatchNorm(1, eps=1e-03, momentum=0.1),
+                                    nn.ReLU(inplace=True))
 
 
     def forward(self, *features):
@@ -163,6 +162,7 @@ class FPNDecoder(nn.Module):
         x = self.conv_fuse(x)
         x = self.dropout(x)
         x =  self.linear_pred(x)
+
 
 
         return x
