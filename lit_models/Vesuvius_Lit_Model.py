@@ -208,20 +208,7 @@ class Lit_Model(pl.LightningModule):
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
 
         # Alternative FBETas
-        fbeta_score_1 = FBetaScore(task="binary", beta=.5, threshold=.1, ).to(self.cfg.device)
-        fbeta_score_4 = FBetaScore(task="binary", beta=.5, threshold=.4, ).to(self.cfg.device)
-        fbeta_score_6 = FBetaScore(task="binary", beta=.5, threshold=.6, ).to(self.cfg.device)
-        fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.75, ).to(self.cfg.device)
-        fbeta_score_83 = FBetaScore(task="binary", beta=.5, threshold=.83, ).to(self.cfg.device)
-        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, ).to(self.cfg.device)
-        fbeta_score_95 = FBetaScore(task="binary", beta=.5, threshold=.95, ).to(self.cfg.device)
-        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs ), labels)
-        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs ), labels)
-        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs ), labels)
-        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs ), labels)
-        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs ), labels)
-        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs ), labels)
-        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs ), labels)
+
 
         self.log("val_loss", loss.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy", accuracy.item(), on_step=False, on_epoch=True, prog_bar=True)
@@ -232,14 +219,6 @@ class Lit_Model(pl.LightningModule):
         self.log("DICE loss", dice, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE kaggle", dice_kaggle, on_step=False, on_epoch=True, prog_bar=True)
         self.log("accuracy with 0.5", accuracy_simple, on_step=False, on_epoch=True, prog_bar=True)
-
-        self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_6", fbeta_6, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_75", fbeta_75, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_83", fbeta_83, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_90", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("fbeta_95", fbeta_95, on_step=False, on_epoch=True, prog_bar=True)
 
         self.metrics["val_metrics"](outputs, labels)
 
@@ -253,13 +232,7 @@ class Lit_Model(pl.LightningModule):
             wandb.log({"DICE": dice.item()})
             wandb.log({"DICE kaggle": dice_kaggle.item()})
             wandb.log({"accuracy_simple": accuracy_simple})
-            wandb.log({"fbeta_1": fbeta_1})
-            wandb.log({"fbeta_4": fbeta_4})
-            wandb.log({"fbeta_6": fbeta_6})
-            wandb.log({"fbeta_75": fbeta_75})
-            wandb.log({"fbeta_83": fbeta_83})
-            wandb.log({"fbeta_90": fbeta_90})
-            wandb.log({"fbeta_95": fbeta_95})
+
 
         outputs = {"loss": loss}
 
@@ -325,6 +298,43 @@ self.loss_monai_focal_dice =monai.losses.DiceFocalLoss(include_background=True,
                                                                lambda_dice=1.0,
                                                                lambda_focal=1.0
                                                                )
+                                                               
+                                                               
+                                                               
+                                                               
+                                                               
+ fbeta_score_1 = FBetaScore(task="binary", beta=.5, threshold=.1, ).to(self.cfg.device)
+        fbeta_score_4 = FBetaScore(task="binary", beta=.5, threshold=.4, ).to(self.cfg.device)
+        fbeta_score_6 = FBetaScore(task="binary", beta=.5, threshold=.6, ).to(self.cfg.device)
+        fbeta_score_75 = FBetaScore(task="binary", beta=.5, threshold=.75, ).to(self.cfg.device)
+        fbeta_score_83 = FBetaScore(task="binary", beta=.5, threshold=.83, ).to(self.cfg.device)
+        fbeta_score_90 = FBetaScore(task="binary", beta=.5, threshold=.9, ).to(self.cfg.device)
+        fbeta_score_95 = FBetaScore(task="binary", beta=.5, threshold=.95, ).to(self.cfg.device)
+        fbeta_1 = fbeta_score_1(torch.sigmoid(outputs ), labels)
+        fbeta_4 = fbeta_score_4(torch.sigmoid(outputs ), labels)
+        fbeta_6 = fbeta_score_6(torch.sigmoid(outputs ), labels)
+        fbeta_75 = fbeta_score_75(torch.sigmoid(outputs ), labels)
+        fbeta_83 = fbeta_score_83(torch.sigmoid(outputs ), labels)
+        fbeta_90 = fbeta_score_90(torch.sigmoid(outputs ), labels)
+        fbeta_95 = fbeta_score_95(torch.sigmoid(outputs ), labels)
+        
+        
+        
+        self.log("fbeta_1", fbeta_1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_4", fbeta_4, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_6", fbeta_6, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_75", fbeta_75, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_83", fbeta_83, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_90", fbeta_90, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("fbeta_95", fbeta_95, on_step=False, on_epoch=True, prog_bar=True)
+
+        wandb.log({"fbeta_1": fbeta_1})
+            wandb.log({"fbeta_4": fbeta_4})
+            wandb.log({"fbeta_6": fbeta_6})
+            wandb.log({"fbeta_75": fbeta_75})
+            wandb.log({"fbeta_83": fbeta_83})
+            wandb.log({"fbeta_90": fbeta_90})
+            wandb.log({"fbeta_95": fbeta_95})
 
 '''
 
