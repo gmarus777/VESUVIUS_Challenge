@@ -528,7 +528,7 @@ class SegmentationHead(nn.Module):
         ) for in_channels in in_channels_list])
         self.final_conv = nn.Sequential(
             nn.Conv2d(len(in_channels_list) * out_channels, out_channels, 1),
-            # nn.BatchNorm2d(out_channels),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
 
