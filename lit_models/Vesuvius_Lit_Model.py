@@ -63,7 +63,7 @@ class Lit_Model(pl.LightningModule):
         #### LOSS Functions ###
         self.dice_kaggle = dice_coef_torch
 
-        self.dice_new = SoftDiceLossV1()
+        #self.dice_new = SoftDiceLossV1()
 
         # Torch loss functions
         #self.weighted_bce_loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(2))
@@ -73,17 +73,20 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
-                                                 classes=None,
-                                                 log_loss=False,
-                                                  from_logits=True,
-                                                   alpha=0.5,
-                                                   beta=0.5,
-                                                  gamma=1.0,
-                                                   smooth=1e-03,
-                                                   ignore_index=None,
-                                                   eps=1e-03,
-                                                   )
+        self.loss_tversky = TverskyLoss()
+
+
+            #smp.losses.TverskyLoss(mode='binary',
+             #                                    classes=None,
+              #                                   log_loss=False,
+               #                                   from_logits=True,
+                #                                   alpha=0.5,
+                 #                                  beta=0.5,
+                  #                                gamma=1.0,
+                   #                                smooth=1e-03,
+                    #                               ignore_index=None,
+                     #                              eps=1e-03,
+                      #                             )
 
 
         #self.loss_focal = smp.losses.FocalLoss(mode='binary',
@@ -94,7 +97,7 @@ class Lit_Model(pl.LightningModule):
              #                                  normalized=False,
               #                                 reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -124,7 +127,8 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
         #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
-        return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
+        #return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  + self.loss_tversky(y_pred , y_true.float())
 
     def _init_model(self):
         return self.cfg.model
@@ -284,6 +288,27 @@ class SoftDiceLossV1(nn.Module):
         loss = 1. - (2 * numer + self.smooth) / (denor + self.smooth)
         return loss
 
+
+class TverskyLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(TverskyLoss, self).__init__()
+
+    def forward(self, inputs, targets, smooth=1, alpha=0.7, beta=0.3):
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        # True Positives, False Positives & False Negatives
+        TP = (inputs * targets).sum()
+        FP = ((1 - targets) * inputs).sum()
+        FN = (targets * (1 - inputs)).sum()
+
+        Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
+
+        return 1 - Tversky
 
 
 

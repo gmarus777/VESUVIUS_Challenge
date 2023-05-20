@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class PreBackbone_3D(nn.Module):
-    def __init__(self, batch_norm = True ):
+    def __init__(self, batch_norm = False ):
 
 
 
