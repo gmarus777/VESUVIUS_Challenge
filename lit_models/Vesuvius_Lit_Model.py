@@ -73,19 +73,18 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = smp.losses.LovaszLoss(mode='binary', per_image=False, ignore_index=None, from_logits=True)
+        self.loss_tversky = smp.losses.TverskyLoss(mode='binary',
+                                                 classes=None,
+                                                 log_loss=False,
+                                                  from_logits=False,
+                                                   alpha=0.5,
+                                                   beta=0.5,
+                                                  gamma=2.0,
+                                                   smooth=1e-05,
+                                                   ignore_index=None,
+                                                   eps=1e-05,
+                                                   )
 
-            #smp.losses.TverskyLoss(mode='binary',
-             #                                      classes=None,
-              #                                     log_loss=False,
-               #                                    from_logits=False,
-                #                                   alpha=0.6,
-                 #                                  beta=0.4,
-                  #                                 gamma=2.0,
-                   #                                smooth=1e-03,
-                    #                               ignore_index=None,
-                     #                              eps=1e-03,
-                      #                             )
 
         #self.loss_focal = smp.losses.FocalLoss(mode='binary',
          #                                      alpha=None,
@@ -95,7 +94,7 @@ class Lit_Model(pl.LightningModule):
              #                                  normalized=False,
               #                                 reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss()  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -125,7 +124,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_monai_focal_dice(y_pred , y_true)
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
         #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
-        return self.dice_new(y_pred, y_true.float()) +self.loss_bce(y_pred , y_true.float())
+        return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
 
     def _init_model(self):
         return self.cfg.model
@@ -285,29 +284,7 @@ class SoftDiceLossV1(nn.Module):
         loss = 1. - (2 * numer + self.smooth) / (denor + self.smooth)
         return loss
 
-class DiceBCELoss(nn.Module):
-    def __init__(self, weight=None, size_average=True):
-        super(DiceBCELoss, self).__init__()
-        self.bce =  torch.nn.BCEWithLogitsLoss(weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=None)#torch.tensor(0.5)
 
-    def forward(self, inputs, targets, smooth=1):
-        # comment out if your model contains a sigmoid or equivalent activation layer
-        BCE =  self.bce(inputs, targets)
-
-        inputs = torch.sigmoid(inputs)
-
-
-        # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
-
-        intersection = (inputs * targets).sum()
-        dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
-        #BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
-
-        Dice_BCE = BCE + dice_loss
-
-        return Dice_BCE
 
 
 def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
