@@ -330,7 +330,7 @@ def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-1, threshold = 0.4):
 
     c_precision = ctp / (ctp + cfp + smooth)
     c_recall = ctp / (y_true_count + smooth)
-    dice = (1 + beta_squared) * (c_precision * c_recall+smooth) / (beta_squared * c_precision + c_recall + smooth)
+    dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
 
     return dice
 
