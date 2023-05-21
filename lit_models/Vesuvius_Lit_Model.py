@@ -293,7 +293,7 @@ class TverskyLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(TverskyLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.7, beta=0.3):
+    def forward(self, inputs, targets, smooth=1, alpha=0.6, beta=0.4):
         # comment out if your model contains a sigmoid or equivalent activation layer
         inputs = F.sigmoid(inputs)
 
