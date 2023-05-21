@@ -11,12 +11,12 @@ from typing import Iterable, List
 
 # TODO: add upsampling after the head
 
-    """nn.functional.interpolate(
+'''nn.functional.interpolate(
             logits, 
             size=masks.shape[-2:], 
             mode="bilinear", 
             align_corners=False
-        )"""
+        )'''
 
 class SegFormer(nn.Module):
     def __init__(
