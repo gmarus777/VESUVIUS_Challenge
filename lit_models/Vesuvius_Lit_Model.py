@@ -312,11 +312,11 @@ class TverskyLoss(nn.Module):
 
 
 
-def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
+def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-1, threshold = 0.4):
 
     #comment out if your model contains a sigmoid or equivalent activation layer
     preds = torch.sigmoid(preds)
-
+    preds = (preds >= threshold)
     # flatten label and prediction tensors
     preds = preds.view(-1).float()
     targets = targets.view(-1).float()
@@ -328,7 +328,7 @@ def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-5):
 
     c_precision = ctp / (ctp + cfp + smooth)
     c_recall = ctp / (y_true_count + smooth)
-    dice = (1 + beta_squared) * (c_precision * c_recall) / (beta_squared * c_precision + c_recall + smooth)
+    dice = (1 + beta_squared) * (c_precision * c_recall+smooth) / (beta_squared * c_precision + c_recall + smooth)
 
     return dice
 
