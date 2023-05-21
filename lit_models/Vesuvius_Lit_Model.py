@@ -295,8 +295,9 @@ class TverskyLoss(nn.Module):
 
     def forward(self, inputs, targets, smooth=1, alpha=0.6, beta=0.4):
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = (inputs >= 0.4)
+
         inputs = F.sigmoid(inputs)
+        # inputs = (inputs >= 0.4)
 
         # flatten label and prediction tensors
         inputs = inputs.view(-1)
