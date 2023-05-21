@@ -314,10 +314,11 @@ class TverskyLoss(nn.Module):
 
 
 
-def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-1, threshold = 0.4):
+def dice_coef_torch(preds, targets, beta=0.5, smooth=1e-1, threshold = 0.3):
 
     #comment out if your model contains a sigmoid or equivalent activation layer
     preds = torch.sigmoid(preds)
+
     preds = (preds >= threshold)
     # flatten label and prediction tensors
     preds = preds.view(-1).float()
