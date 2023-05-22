@@ -97,7 +97,7 @@ class Lit_Model(pl.LightningModule):
              #                                  normalized=False,
               #                                 reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.75))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -128,7 +128,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
         #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
         #return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
-        return self.loss_bce(y_pred , y_true.float())  + self.loss_tversky(y_pred , y_true.float())
+        return self.loss_bce(y_pred , y_true.float())  + 0.5*self.loss_tversky(y_pred , y_true.float())
 
     def _init_model(self):
         return self.cfg.model
@@ -292,7 +292,7 @@ class TverskyLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(TverskyLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=0.5):
+    def forward(self, inputs, targets, smooth=1, alpha=0.6, beta=0.4):
         # comment out if your model contains a sigmoid or equivalent activation layer
 
         inputs = F.sigmoid(inputs)
