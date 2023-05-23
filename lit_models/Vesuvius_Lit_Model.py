@@ -13,7 +13,6 @@ from torchmetrics import MetricCollection
 from tqdm.auto import tqdm
 import segmentation_models_pytorch as smp
 import torch.nn.functional as F
-from lit_models.Loss_functions import ComboBCEDiceLoss, TverskyLoss
 import torch.cuda.amp as amp
 #import soft_dice_cpp # should import torch before import this
 
@@ -73,7 +72,9 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = TverskyLoss()
+        self.loss_tversky = TverskyLoss(alpha=0.5, beta=0.5)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+
 
 
             #smp.losses.TverskyLoss(mode='binary',
@@ -97,7 +98,6 @@ class Lit_Model(pl.LightningModule):
              #                                  normalized=False,
               #                                 reduced_threshold=None)
 
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.75))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
         # MONAI loss functions
@@ -128,7 +128,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
         #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
         #return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
-        return self.loss_bce(y_pred , y_true.float())  + 0.5*self.loss_tversky(y_pred , y_true.float())
+        return 0.5*self.loss_bce(y_pred , y_true.float())  + 0.5*self.loss_tversky(y_pred , y_true.float())
 
     def _init_model(self):
         return self.cfg.model
@@ -289,10 +289,13 @@ class SoftDiceLossV1(nn.Module):
 
 
 class TverskyLoss(nn.Module):
-    def __init__(self, weight=None, size_average=True):
+    def __init__(self, alpha=0.6, beta=0.4, weight=None, size_average=True):
         super(TverskyLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.6, beta=0.4):
+        self.alpha = alpha
+        self.alpha = beta
+
+    def forward(self, inputs, targets, smooth=1, ):
         # comment out if your model contains a sigmoid or equivalent activation layer
 
         inputs = F.sigmoid(inputs)
@@ -307,7 +310,7 @@ class TverskyLoss(nn.Module):
         FP = ((1 - targets) * inputs).sum()
         FN = (targets * (1 - inputs)).sum()
 
-        Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
+        Tversky = (TP + smooth) / (TP + self.alpha * FP + self.alpha * FN + smooth)
 
         return 1 - Tversky
 

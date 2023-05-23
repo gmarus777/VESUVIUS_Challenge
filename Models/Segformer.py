@@ -21,6 +21,7 @@ from typing import Iterable, List
 class SegFormer(nn.Module):
     def __init__(
         self,
+
         in_channels: int,
         widths: List[int],
         depths: List[int],
@@ -33,6 +34,7 @@ class SegFormer(nn.Module):
         scale_factors: List[int],
         num_classes: int,
         drop_prob: float = 0.0,
+        image_size =256,
     ):
 
         super().__init__()
@@ -47,6 +49,8 @@ class SegFormer(nn.Module):
             mlp_expansions,
             drop_prob,
         )
+
+        self.image_size = image_size
         self.decoder = SegFormerDecoder(decoder_channels, widths[::-1], scale_factors)
         self.head = SegFormerSegmentationHead(
             decoder_channels, num_classes, num_features=len(widths)
@@ -56,7 +60,11 @@ class SegFormer(nn.Module):
         features = self.encoder(x)
         features = self.decoder(features[::-1])
         segmentation = self.head(features)
-        return segmentation
+        final_out = nn.functional.interpolate( segmentation,
+                                                size=(self.image_size,self.image_size),
+                                                mode="bilinear",
+                                                align_corners=False)
+        return final_out
 
 
 
