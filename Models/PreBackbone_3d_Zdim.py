@@ -11,7 +11,7 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[16, 32, 64], batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
