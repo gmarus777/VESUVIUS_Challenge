@@ -27,7 +27,7 @@ class PreBackbone_3D_SIMPLE(nn.Module):
         self.leaky_relu = nn.LeakyReLU(inplace=False)
 
         # layer 1
-        self.conv1 = nn.Conv3d(in_channels=5,
+        self.conv1 = nn.Conv3d(in_channels=emdedding_dims[0],
                                out_channels=filter_sizes[0],
                                kernel_size=(3, 3, 3),
                                stride=(2, 1, 1),
@@ -92,7 +92,7 @@ class PreBackbone_3D_SIMPLE(nn.Module):
         # Stage 2 Convolutions -- 3 layers
 
         # Layer 1
-        y = self.conv1(x)  # (B, 1,  C, H, W) -> (B, 4,  C/2, H, W)
+        y = self.conv1(x_orig)  # (B, 1,  C, H, W) -> (B, 4,  C/2, H, W)
 
         y = y.permute(0, 2, 1, 3, 4)
         y = self.pool(y)  # (B, 4,  C/2, H, W) ->  (B, 2,  C/2, H, W)
