@@ -11,7 +11,7 @@ from einops import rearrange
 
 
 class PreBackbone_3D_SIMPLE(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24,att_dim=256, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
+    def __init__(self, out_channels = 3, image_size=256, z_dim= 24,att_dim=256, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
 
         super(PreBackbone_3D_SIMPLE, self).__init__()
 
@@ -22,7 +22,7 @@ class PreBackbone_3D_SIMPLE(nn.Module):
 
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
-        self.global_pool_final = nn.AdaptiveAvgPool3d((out_channels, None, None))
+        self.global_pool_final = nn.AdaptiveAvgPool3d((1, image_size, image_size))
         self.batch_norm = torch.nn.BatchNorm3d(num_features=1, momentum=0.1)
         self.leaky_relu = nn.LeakyReLU(inplace=False)
 
