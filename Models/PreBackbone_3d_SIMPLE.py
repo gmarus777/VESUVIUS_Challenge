@@ -10,7 +10,7 @@ from einops import rearrange
 # TODO:
 
 
-class PreBackbone_3D_ZDIM(nn.Module):
+class PreBackbone_3D_SIMPLE(nn.Module):
     def __init__(self, out_channels = 3, z_dim= 24,att_dim=256, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
