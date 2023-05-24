@@ -85,8 +85,8 @@ class Encoder_3D(torch.nn.Module):
 
 
     def forward(self, x):
-        if self._in_channels > 1:
-            x = torch.squeeze(x)
+        x = x.unsqueeze(1)
+
         y = self.conv1(x)
         y = torch.nn.functional.relu(y)
         if self._batch_norm:
