@@ -170,8 +170,8 @@ class EfficientMultiHeadAttention(nn.Module):
         self.reducer = nn.Sequential(
             nn.Conv2d(in_channels=channels,
                       out_channels=channels,
-                      kernel_size=(4, 4),
-                      stride=(4, 4),
+                      kernel_size=(8, 8),
+                      stride=(8, 8),
                       padding=(0, 0)),
 
             LayerNorm_att(channels, ) )

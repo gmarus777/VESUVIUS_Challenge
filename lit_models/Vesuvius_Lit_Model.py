@@ -72,8 +72,8 @@ class Lit_Model(pl.LightningModule):
         #                                     log_loss=False,
          #                                    # smooth=0.1, )
 
-        self.loss_tversky = TverskyLoss(alpha=0.5, beta=0.5)
-        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(1))  # pos_weight=torch.tensor(1), smooth_factor=0.1
+        self.loss_tversky = TverskyLoss(alpha=0.8, beta=0.2)
+        self.loss_bce = smp.losses.SoftBCEWithLogitsLoss(pos_weight=torch.tensor(0.5))  # pos_weight=torch.tensor(1), smooth_factor=0.1
 
 
 
@@ -289,7 +289,7 @@ class SoftDiceLossV1(nn.Module):
 
 
 class TverskyLoss(nn.Module):
-    def __init__(self, alpha=0.6, beta=0.4, weight=None, size_average=True):
+    def __init__(self, alpha, beta, weight=None, size_average=True):
         super(TverskyLoss, self).__init__()
 
         self.alpha = alpha

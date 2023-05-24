@@ -152,8 +152,8 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
 
         # idxs = range(65)
         mid = 65 // 2 # 32
-        start = mid - self.cfg.z_dim // 2 # 29
-        end = mid + self.cfg.z_dim // 2 # 35
+        start = mid - self.cfg.z_dim // 2 - 2 # 29
+        end = mid + self.cfg.z_dim // 2  -2 # 35
         idxs = range(start, end)
 
         for i in tqdm(idxs):
