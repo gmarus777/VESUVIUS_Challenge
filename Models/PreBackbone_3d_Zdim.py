@@ -11,7 +11,7 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24,att_dim=32, emdedding_dims=[4], filter_sizes=[ 16, 32, 64], batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24,att_dim=64, emdedding_dims=[4], filter_sizes=[ 16, 32, 64], batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
@@ -23,7 +23,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
         self.global_pool_final = nn.AdaptiveAvgPool3d((out_channels, None, None))
-        self.batch_norm = torch.nn.BatchNorm3d(num_features=1, momentum=0.1)
+        self.batch_norm = torch.nn.BatchNorm3d(num_features=1, momentum=0.9)
         self.leaky_relu = nn.LeakyReLU(inplace=False)
 
         # layer 1
@@ -149,8 +149,8 @@ class Embed(nn.Module):
             # add a laeyr where bothz and x,y go down by half and change the next one by 2
         self.conv_3d_embed = nn.Conv3d(in_channels=emdedding_dims[0],
                                        out_channels=1,
-                                       kernel_size=(1, 16, 16),
-                                       stride=(1, 16, 16),
+                                       kernel_size=(1, 8, 8),
+                                       stride=(1, 8, 8),
                                        padding=(0, 1, 1)
                                        )
 
