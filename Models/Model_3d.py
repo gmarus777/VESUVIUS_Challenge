@@ -21,7 +21,7 @@ class Encoder_3D(torch.nn.Module):
         self._in_channels = in_channels
 
         self.pool = torch.nn.AvgPool3d(kernel_size=2, stride=2)
-        self.global_pool = torch.nn.AdaptiveAvgPool3d((1, subvolume_shape[1], subvolume_shape[2]))
+        self.global_pool = torch.nn.AdaptiveAvgPool3d((1, None, None))
 
         paddings = [1, 1, 1, 1]
         kernel_sizes = [3, 3, 3, 3]

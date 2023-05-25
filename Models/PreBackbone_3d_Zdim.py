@@ -11,11 +11,11 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24,att_dim=256, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24,att_dim=64, emdedding_dims=[4], filter_sizes=[ 16, 32, 64], batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
-        self.z_dim = z_dim//2
+        self.z_dim = z_dim
 
         self.embed_layer = Embed(emdedding_dims=emdedding_dims)
         self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim)
@@ -84,8 +84,10 @@ class PreBackbone_3D_ZDIM(nn.Module):
         x_att = self.leaky_relu(x_att)
 
 
+
         # attention layer for z_dim
         x_after_att = self.attention(x_att)
+
 
         x = torch.cat((x_orig, x_after_att), dim=1)
 
@@ -141,14 +143,14 @@ class Embed(nn.Module):
         self.conv_3d = nn.Conv3d(in_channels=1,
                                  out_channels=emdedding_dims[0],
                                  kernel_size=(3, 1, 1),
-                                 stride=(2, 1, 1),
+                                 stride=(1, 1, 1),
                                  padding=(1, 0, 0)
                                  )
             # add a laeyr where bothz and x,y go down by half and change the next one by 2
         self.conv_3d_embed = nn.Conv3d(in_channels=emdedding_dims[0],
                                        out_channels=1,
-                                       kernel_size=(1, 4, 4),
-                                       stride=(1, 4, 4),
+                                       kernel_size=(1, 8, 8),
+                                       stride=(1, 8, 8),
                                        padding=(0, 1, 1)
                                        )
 
@@ -188,6 +190,9 @@ class EfficientMultiHeadAttention(nn.Module):
         # attention needs tensor of shape (batch, sequence_length, channels)
         reduced_x = rearrange(reduced_x, "b c h w -> b  c ( h w )")
         x = rearrange(x, "b c  h w -> b  c ( h w)")
+
+        print(x.shape, reduced_x.shape)
+
         out = self.att(reduced_x, reduced_x, reduced_x)[0]
         # reshape it back to (batch, channels, height, width)
         out = rearrange(out, "b  c (h w) -> b c h w", h=h, w=w, )
@@ -203,3 +208,29 @@ class LayerNorm_att(nn.LayerNorm):
         x = super().forward(x)
         x = rearrange(x, "b  h w c -> b c  h w")
         return x
+
+
+class PositionalEncoding(torch.nn.Module):
+    """Classic Attention-is-all-you-need positional encoding."""
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000) -> None:
+        super().__init__()
+        self.dropout = torch.nn.Dropout(p=dropout)
+        pe = self.make_pe(d_model=d_model, max_len=max_len)  # (max_len, 1, d_model)
+        self.register_buffer("pe", pe)
+
+    @staticmethod
+    def make_pe(d_model: int, max_len: int) -> torch.Tensor:
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(1)
+        return pe
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x.shape = (S, B, d_model)
+        assert x.shape[2] == self.pe.shape[2]  # type: ignore
+        x = x + self.pe[: x.size(0)]  # type: ignore
+        return self.dropout(x)
