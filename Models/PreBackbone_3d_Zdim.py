@@ -11,7 +11,7 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24,att_dim=64, emdedding_dims=[4], filter_sizes=[ 16, 32, 64], batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24,att_dim=32, emdedding_dims=[4], filter_sizes=[ 16, 32, 64], batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
@@ -149,8 +149,8 @@ class Embed(nn.Module):
             # add a laeyr where bothz and x,y go down by half and change the next one by 2
         self.conv_3d_embed = nn.Conv3d(in_channels=emdedding_dims[0],
                                        out_channels=1,
-                                       kernel_size=(1, 8, 8),
-                                       stride=(1, 8, 8),
+                                       kernel_size=(1, 16, 16),
+                                       stride=(1, 16, 16),
                                        padding=(0, 1, 1)
                                        )
 
