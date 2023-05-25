@@ -212,6 +212,7 @@ class Lit_Model(pl.LightningModule):
         recall = smp.metrics.recall(tp+smooth, fp, fn, tn, reduction="micro")
         fbeta = smp.metrics.fbeta_score(tp+smooth, fp, fn, tn, beta=.5, reduction='micro', )
         precision = smp.metrics.precision(tp+smooth, fp, fn, tn, reduction="micro")
+        FPR = smp.metrics.functional.false_positive_rate(tp, fp, fn, tn, reduction='micro', class_weights=None, zero_division=1.0)
 
         accuracy_simple = (preds == labels).sum().float().div(labels.size(0) * labels.size(2) ** 2)
 
@@ -223,6 +224,7 @@ class Lit_Model(pl.LightningModule):
         self.log("recall", recall.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("precision", precision.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("FBETA", fbeta.item(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("FPR", FPR.item(), on_step=False, on_epoch=True, prog_bar=True)
         self.log("BCE loss", bce, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE loss", dice, on_step=False, on_epoch=True, prog_bar=True)
         self.log("DICE kaggle", dice_kaggle, on_step=False, on_epoch=True, prog_bar=True)
@@ -236,6 +238,7 @@ class Lit_Model(pl.LightningModule):
             wandb.log({"recall": recall.item()})
             wandb.log({"precision": precision.item()})
             wandb.log({"FBETA": fbeta.item()})
+            wandb.log({"FPR": FPR.item()})
             wandb.log({"BCE": bce})
             wandb.log({"DICE": dice.item()})
             wandb.log({"DICE kaggle": dice_kaggle.item()})
