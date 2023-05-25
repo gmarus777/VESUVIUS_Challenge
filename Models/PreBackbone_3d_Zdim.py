@@ -120,7 +120,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
 
         y = self.conv4(y)
         y = self.global_pool_final(y)
-        y = self.leaky_relu(y)
+        #y = self.leaky_relu(y)
 
         y = self.batch_norm(y)
         return y.squeeze(1)
