@@ -191,7 +191,7 @@ class EfficientMultiHeadAttention(nn.Module):
         reduced_x = rearrange(reduced_x, "b c h w -> b  c ( h w )")
         x = rearrange(x, "b c  h w -> b  c ( h w)")
 
-        print(x.shape, reduced_x.shape)
+
 
         out = self.att(reduced_x, reduced_x, reduced_x)[0]
         # reshape it back to (batch, channels, height, width)
