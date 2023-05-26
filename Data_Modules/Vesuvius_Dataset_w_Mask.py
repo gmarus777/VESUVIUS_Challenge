@@ -24,7 +24,7 @@ FOR CFG Template look at CFG_TEMPLATE.py
 
 # TODO: FINISH TEST DATALOADER, USE INFERENCE NOTEBOOK procedures for submission and predictions
 
-class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
+class Vesuvius_Tile_Datamodule_w_Mask(pl.LightningDataModule):
     def __init__(self,
                  cfg,
                  ):
