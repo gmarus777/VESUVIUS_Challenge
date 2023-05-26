@@ -110,7 +110,7 @@ class Vesuvius_Tile_Datamodule_w_Mask(pl.LightningDataModule):
                         valid_masks.append(mask[y1:y2, x1:x2, None])
                         valid_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
 
-                    valid_xyxys.append([x1, y1, x2, y2])
+                        valid_xyxys.append([x1, y1, x2, y2])
 
         return valid_images, valid_masks,  valid_xyxys, valid_binary_masks
 
