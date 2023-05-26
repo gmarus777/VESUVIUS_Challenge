@@ -80,9 +80,10 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
                     x2 = x1 + self.cfg.patch_size
                     # xyxys.append((x1, y1, x2, y2))
 
-                    train_images.append(image[y1:y2, x1:x2])
-                    train_masks.append(mask[y1:y2, x1:x2, None])
-                    train_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
+                    if np.count_nonzero(binary_mask[y1:y2, x1:x2, None]) != 0:
+                        train_images.append(image[y1:y2, x1:x2])
+                        train_masks.append(mask[y1:y2, x1:x2, None])
+                        train_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
 
         return train_images, train_masks, train_binary_masks
 
@@ -104,9 +105,10 @@ class Vesuvius_Tile_Datamodule(pl.LightningDataModule):
                     x2 = x1 + self.cfg.patch_size
                     # xyxys.append((x1, y1, x2, y2))
 
-                    valid_images.append(image[y1:y2, x1:x2])
-                    valid_masks.append(mask[y1:y2, x1:x2, None])
-                    valid_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
+                    if np.count_nonzero(binary_mask[y1:y2, x1:x2, None]) != 0:
+                        valid_images.append(image[y1:y2, x1:x2])
+                        valid_masks.append(mask[y1:y2, x1:x2, None])
+                        valid_binary_masks.append(binary_mask[y1:y2, x1:x2, None])
 
                     valid_xyxys.append([x1, y1, x2, y2])
 
