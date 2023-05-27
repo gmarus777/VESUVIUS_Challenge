@@ -116,5 +116,5 @@ class Encoder_3D(torch.nn.Module):
         return y.squeeze(1)
 
 
-class Encoder_Head
+
 
