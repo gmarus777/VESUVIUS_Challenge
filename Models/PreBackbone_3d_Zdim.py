@@ -203,3 +203,19 @@ class LayerNorm_att(nn.LayerNorm):
         x = super().forward(x)
         x = rearrange(x, "b  h w c -> b c  h w")
         return x
+
+
+class ClassifierHead(nn.Module):
+    def __init__(self):
+        super(ClassifierHead, self).__init__()
+
+        # Apply a 1x1x1 convolution to reduce the channel dimension from 3 to 1
+        self.conv = nn.Conv2d(in_channels=3,
+                              out_channels=1,
+                              kernel_size=1,
+                              stride=1,
+                              padding=0)
+
+    def forward(self, x):
+        x = self.conv(x)
+        return x
