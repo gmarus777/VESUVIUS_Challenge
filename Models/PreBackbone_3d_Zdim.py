@@ -27,7 +27,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.leaky_relu = nn.LeakyReLU(inplace=False)
 
         # layer 1
-        self.conv1 = nn.Conv3d(in_channels=5,
+        self.conv1 = nn.Conv3d(in_channels=emdedding_dims[0]+1,
                                out_channels=filter_sizes[0],
                                kernel_size=(3, 3, 3),
                                stride=(2, 1, 1),
@@ -122,7 +122,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = self.global_pool_final(y)
         #y = self.leaky_relu(y)
 
-        #y = self.batch_norm(y)
+        y = self.batch_norm(y)
         return y.squeeze(1)
 
 
