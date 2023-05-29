@@ -67,7 +67,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         torch.nn.init.zeros_(self.conv3.bias)
 
         self.batch_norm3 = torch.nn.BatchNorm3d(
-            num_features=filter_sizes[2]//2, eps=1e-03
+            num_features=filter_sizes[2], eps=1e-03
         )
 
         # layer 4
