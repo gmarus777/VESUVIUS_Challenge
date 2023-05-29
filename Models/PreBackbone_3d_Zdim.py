@@ -58,7 +58,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         torch.nn.init.xavier_uniform_(self.conv3.weight)
         torch.nn.init.zeros_(self.conv3.bias)
 
-        # layer 3
+        # layer 4
         self.conv4 = nn.Conv3d(in_channels=1,
                                out_channels=1,
                                kernel_size=(3, 3, 3),
@@ -66,8 +66,8 @@ class PreBackbone_3D_ZDIM(nn.Module):
                                padding=(1, 1, 1)
                                )
 
-        torch.nn.init.xavier_uniform_(self.conv3.weight)
-        torch.nn.init.zeros_(self.conv3.bias)
+        torch.nn.init.xavier_uniform_(self.conv4.weight)
+        torch.nn.init.zeros_(self.conv4.bias)
 
     def forward(self, x):
         x = x.unsqueeze(1)
