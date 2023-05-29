@@ -23,7 +23,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
         self.global_pool_final = nn.AdaptiveAvgPool3d((out_channels, None, None))
-        self.batch_norm = torch.nn.BatchNorm3d(num_features=1, momentum=0.1)
+        self.batch_norm = torch.nn.BatchNorm3d(num_features=1, momentum=0.1, eps=1e-02)
         self.leaky_relu = nn.LeakyReLU(inplace=True)
 
         # layer 1
