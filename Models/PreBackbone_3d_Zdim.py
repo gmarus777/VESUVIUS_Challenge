@@ -112,7 +112,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = y.permute(0, 2, 1, 3, 4)
         y = self.leaky_relu(y)
 
-        y = self.batch_norm1(y)
+        #y = self.batch_norm1(y)
 
         # Layer 2
         y = self.conv2(y)
@@ -120,13 +120,16 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = self.pool(y)
         y = y.permute(0, 2, 1, 3, 4)
         y = self.leaky_relu(y)
-        y = self.batch_norm2(y)
+
+        #y = self.batch_norm2(y)
 
         # Layer 3
         y = self.conv3(y)
         y = self.global_pool(y)
         y = self.leaky_relu(y)
-        y = self.batch_norm3(y)
+
+        #y = self.batch_norm3(y)
+
         y = y.permute(0, 2, 1, 3, 4) # (B,1,64, H, W)
 
         # Final pooling to out_channles channels
