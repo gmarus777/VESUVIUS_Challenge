@@ -132,8 +132,8 @@ class Vesuvius_Tile_Datamodule_w_Mask(pl.LightningDataModule):
 
         # idxs = range(65)
         mid = 65 // 2 # 32
-        start = mid - self.cfg.z_dim // 2 -4 # 32-8=24 -4 =20  changed to
-        end = mid + self.cfg.z_dim // 2  -4 # 32+8 =40 -4 =36
+        start = mid - self.cfg.z_dim // 2  # 32-8=24 -4 =20  changed to
+        end = mid + self.cfg.z_dim // 2   # 32+8 =40 -4 =36
         idxs = range(start, end)
 
         for i in tqdm(idxs):
