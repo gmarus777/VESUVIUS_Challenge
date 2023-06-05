@@ -128,7 +128,7 @@ class Lit_Model(pl.LightningModule):
         #return self.loss_bce(y_pred , y_true.float()) #+ self.loss_monai_focal_dice(y_pred , y_true.float())
         #return self.loss_bce(y_pred, y_true.float())# + self.loss_monai_focal_dice(y_pred, y_true.float()) #self.dice_kaggle(y_pred, y_true.float())
         #return  self.loss_bce(y_pred , y_true.float()) + self.dice_new(y_pred, y_true.float())
-        return 0.5*self.loss_bce(y_pred , y_true.float())  + 0.5*self.loss_tversky(y_pred , y_true.float())
+        return 4*self.loss_bce(y_pred , y_true.float())  + self.loss_tversky(y_pred , y_true.float())
 
     def _init_model(self):
         return self.cfg.model
