@@ -99,7 +99,9 @@ class PreBackbone_3D_ZDIM(nn.Module):
         # Stage 2 Convolutions -- 3 layers
 
         # Layer 1
-        y = self.conv1(x)  # (B, 1,  C, H, W) -> (B, 4,  C/2, H, W)
+        #y = self.conv1(x)  # (B, 1,  C, H, W) -> (B, 4,  C/2, H, W)
+        y = self.conv1(x_orig)
+
 
         y = y.permute(0, 2, 1, 3, 4)
         y = self.pool(y)  # (B, 4,  C/2, H, W) ->  (B, 2,  C/2, H, W)
