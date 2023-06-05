@@ -11,14 +11,14 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[8, 16, 32,],att_dim=196, batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[8, 16, 32,],att_dim=196, patch_size=256, batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
         self.z_dim = z_dim//2
 
         self.embed_layer = Embed(emdedding_dims=emdedding_dims)
-        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim)
+        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim, patch_size=patch_size)
 
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
@@ -178,8 +178,10 @@ class Embed(nn.Module):
 
 
 class EfficientMultiHeadAttention(nn.Module):
-    def __init__(self, channels, att_dim =256, reduction_ratio: int = 1, num_heads: int = 8):
+    def __init__(self, channels, att_dim =256, patch_size=256, reduction_ratio: int = 1, num_heads: int = 8):
         super().__init__()
+
+        self.patch_size = patch_size
 
         self.reducer = nn.Sequential(
             nn.Conv2d(in_channels=channels,
@@ -205,7 +207,7 @@ class EfficientMultiHeadAttention(nn.Module):
         out = self.att(reduced_x, reduced_x, reduced_x)[0]
         # reshape it back to (batch, channels, height, width)
         out = rearrange(out, "b  c (h w) -> b c h w", h=h, w=w, )
-        out = nn.functional.interpolate(out, size=(256, 256), mode="bilinear", align_corners=False)
+        out = nn.functional.interpolate(out, size=(self.patch_size, self.patch_size), mode="bilinear", align_corners=False)
         out = out.unsqueeze(1)
 
         return out
