@@ -11,14 +11,14 @@ from einops import rearrange
 
 
 class PreBackbone_3D_ZDIM(nn.Module):
-    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[8, 16, 32,], batch_norm=False):
+    def __init__(self, out_channels = 3, z_dim= 24, emdedding_dims=[4], filter_sizes=[8, 16, 32,],att_dim=196, batch_norm=False):
 
         super(PreBackbone_3D_ZDIM, self).__init__()
 
         self.z_dim = z_dim//2
 
         self.embed_layer = Embed(emdedding_dims=emdedding_dims)
-        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =256)
+        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim)
 
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
