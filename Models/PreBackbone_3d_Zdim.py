@@ -92,7 +92,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
 
         # attention layer for z_dim
         x_after_att = self.attention(x_att)
-        print(x_orig.shape, x_att.shape)
+        print(x_orig.shape, x_after_att.shape)
 
         x = torch.cat((x_orig, x_after_att), dim=1)
 
