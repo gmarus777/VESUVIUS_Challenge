@@ -27,7 +27,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.leaky_relu = nn.LeakyReLU(inplace=False)
 
         # layer 1
-        self.conv1 = nn.Conv3d(in_channels=emdedding_dims[0]+1,
+        self.conv1 = nn.Conv3d(in_channels=emdedding_dims[0],#+1,
                                out_channels=filter_sizes[0],
                                kernel_size=(3, 3, 3),
                                stride=(2, 1, 1),
@@ -87,14 +87,14 @@ class PreBackbone_3D_ZDIM(nn.Module):
         # x_att = (B, 1, C/2, H/4, W/4)
         x_orig, x_att = self.embed_layer(x)
         x_orig = self.leaky_relu(x_orig)
-        x_att = self.leaky_relu(x_att)
+        #x_att = self.leaky_relu(x_att)
 
 
         # attention layer for z_dim
-        x_after_att = self.attention(x_att)
+        #x_after_att = self.attention(x_att)
 
 
-        x = torch.cat((x_orig, x_after_att), dim=1)
+        #x = torch.cat((x_orig, x_after_att), dim=1)
 
         # Stage 2 Convolutions -- 3 layers
 
