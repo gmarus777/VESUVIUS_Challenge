@@ -37,7 +37,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         torch.nn.init.xavier_uniform_(self.conv1.weight)
         torch.nn.init.zeros_(self.conv1.bias)
 
-        #self.batch_norm1 = torch.nn.BatchNorm3d( num_features=filter_sizes[0]//2, eps=1e-03)
+        self.batch_norm1 = torch.nn.BatchNorm3d( num_features=filter_sizes[0]//2) #eps=1e-03
 
         # layer 2
         self.conv2 = nn.Conv3d(in_channels=filter_sizes[0] // 2,
@@ -49,7 +49,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         torch.nn.init.xavier_uniform_(self.conv2.weight)
         torch.nn.init.zeros_(self.conv2.bias)
 
-        #self.batch_norm2 = torch.nn.BatchNorm3d( num_features=filter_sizes[1]//2, eps=1e-03)
+        self.batch_norm2 = torch.nn.BatchNorm3d( num_features=filter_sizes[1]//2)
 
         # layer 3
         self.conv3 = nn.Conv3d(in_channels=filter_sizes[1] // 2,
@@ -62,7 +62,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         torch.nn.init.xavier_uniform_(self.conv3.weight)
         torch.nn.init.zeros_(self.conv3.bias)
 
-        #self.batch_norm3 = torch.nn.BatchNorm3d(num_features=filter_sizes[2], eps=1e-03)
+        self.batch_norm3 = torch.nn.BatchNorm3d(num_features=filter_sizes[2])
 
         # layer 4
         self.conv4 = nn.Conv3d(in_channels=1,
@@ -106,7 +106,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = y.permute(0, 2, 1, 3, 4)
         y = self.leaky_relu(y)
 
-        #y = self.batch_norm1(y)
+        y = self.batch_norm1(y)
 
         # Layer 2
         y = self.conv2(y)
@@ -115,14 +115,14 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = y.permute(0, 2, 1, 3, 4)
         y = self.leaky_relu(y)
 
-        #y = self.batch_norm2(y)
+        y = self.batch_norm2(y)
 
         # Layer 3
         y = self.conv3(y)
         y = self.global_pool(y)
         y = self.leaky_relu(y)
 
-        #y = self.batch_norm3(y)
+        y = self.batch_norm3(y)
 
         y = y.permute(0, 2, 1, 3, 4) # (B,1,64, H, W)
 
@@ -132,7 +132,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         y = self.global_pool_final(y)
         #y = self.leaky_relu(y)
 
-        #y = self.batch_norm(y)
+        y = self.batch_norm(y)
         return y.squeeze(1)
 
 
@@ -162,8 +162,11 @@ class Embed(nn.Module):
                                        padding=(0, 1, 1)
                                        )
 
-        self.norm = LayerNorm2d(emdedding_dims[0])
-        self.norm_embed = LayerNorm2d(1)
+        #self.norm = LayerNorm2d(emdedding_dims[0])
+        self.norm = torch.nn.BatchNorm3d(num_features=emdedding_dims[0])
+
+        #self.norm_embed = LayerNorm2d(1)
+        self.norm_embed =  torch.nn.BatchNorm3d(num_features=1)
 
     def forward(self, x):
         x = self.conv_3d(x)
