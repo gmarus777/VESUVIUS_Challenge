@@ -18,7 +18,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.z_dim = z_dim//2
 
         self.embed_layer = Embed(emdedding_dims=emdedding_dims)
-        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim, patch_size=patch_size)
+        #self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim, patch_size=patch_size)
 
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
@@ -174,9 +174,9 @@ class Embed(nn.Module):
     def forward(self, x):
         x = self.conv_3d(x)
         x = self.norm(x)
-        x_embed = self.conv_3d_embed(x)
-        x_embed = self.norm_embed(x_embed)
-        return x, x_embed
+        #x_embed = self.conv_3d_embed(x)
+        #x_embed = self.norm_embed(x_embed)
+        return x
 
 
 class EfficientMultiHeadAttention(nn.Module):
