@@ -18,7 +18,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         self.z_dim = z_dim//2
 
         self.embed_layer = Embed(emdedding_dims=emdedding_dims)
-        #self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim, patch_size=patch_size)
+        self.attention = EfficientMultiHeadAttention(channels=self.z_dim, att_dim =att_dim, patch_size=patch_size)
 
         self.pool = nn.AvgPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool3d((1, None, None))
@@ -85,7 +85,7 @@ class PreBackbone_3D_ZDIM(nn.Module):
         # embed layer produces tensors:
         # x_orig = (B, emdedding_dims[0], C/2, H, W) for residual connection
         # x_att = (B, 1, C/2, H/4, W/4)
-        x_orig, x_att = self.embed_layer(x)
+        x_orig = self.embed_layer(x)
         x_orig = self.leaky_relu(x_orig)
         #x_att = self.leaky_relu(x_att)
 
@@ -176,7 +176,7 @@ class Embed(nn.Module):
         x = self.norm(x)
         #x_embed = self.conv_3d_embed(x)
         #x_embed = self.norm_embed(x_embed)
-        return x
+        return x #, x_embed
 
 
 class EfficientMultiHeadAttention(nn.Module):
